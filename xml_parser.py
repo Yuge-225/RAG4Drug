@@ -21,6 +21,8 @@ import re
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 
 from rich.console import Console
 from rich.progress import (
