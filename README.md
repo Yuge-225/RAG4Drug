@@ -1,129 +1,131 @@
 # 💊 Drug Interaction RAG System
 
-一个基于 RAG（检索增强生成）架构的药物相互作用智能问答系统。
+A drug interaction Q&A system based on RAG (Retrieval-Augmented Generation) architecture.
 
-输入病人正在服用的药物清单，系统会从权威药物数据库（DrugBank）中检索相关信息，由 LLM 生成结构化的用药安全报告。
-
----
-
-## 目录
-
-- [项目背景](#项目背景)
-- [系统架构](#系统架构)
-- [项目文件说明](#项目文件说明)
-- [环境配置](#环境配置)
-- [快速开始](#快速开始)
-- [当前进度](#当前进度)
-- [注意事项](#注意事项)
+Input a patient's medication list, and the system retrieves relevant information from the authoritative DrugBank database, then uses an LLM to generate a structured medication safety report.
 
 ---
 
-## 项目背景
+## Table of Contents
 
-病人同时服用多种药物时，药物之间可能存在相互作用（Drug-Drug Interaction），轻则降低药效，重则危及生命。
-
-本系统的目标是：
-
-> 输入「病人正在服用的药物列表」→ 输出「结构化用药风险报告」
-
-数据来源：[DrugBank](https://go.drugbank.com/)，权威药物数据库，包含约 **20,000 种药物**、**290 万条**相互作用记录。
+- [Background](#background)
+- [System Architecture](#system-architecture)
+- [Project Structure](#project-structure)
+- [Environment Setup](#environment-setup)
+- [Quick Start](#quick-start)
+- [Current Progress](#current-progress)
+- [Notes](#notes)
 
 ---
 
-## 系统架构
+## Background
+
+When patients take multiple medications simultaneously, drug-drug interactions (DDI) may occur—ranging from reduced efficacy to life-threatening consequences.
+
+The goal of this system is:
+
+> Input "patient's current medication list" → Output "structured medication risk report"
+
+Data source: [DrugBank](https://go.drugbank.com/), an authoritative drug database containing approximately **20,000 drugs** and **2.9 million** interaction records.
+
+---
+
+## System Architecture
 
 ```
-用户问题："华法林和阿司匹林可以一起吃吗？"
+User query: "Can I take warfarin and aspirin together?"
                     │
                     ▼
             ┌───────────────┐
-            │  NER 实体识别  │  从问题中提取药物名
-            │  （查同义词表）│  华法林 → DB00001
+            │  NER Entity   │  Extract drug names from query
+            │  Recognition  │  Warfarin → DB00001
+            │ (Synonym lookup)│
             └───────┬───────┘
                     │
           ┌─────────┴──────────┐
           ▼                    ▼
   ┌──────────────┐    ┌──────────────────┐
   │    SQLite    │    │     ChromaDB     │
-  │  精确查询    │      │   语义向量检索    │
-  │              │     │                 │
-  │ • 相互作用   │      │ • 药理机制描述   │
-  │ • 食物禁忌   │      │ • 适应症说明     │
-  │ • 剂量信息   │      │ • 药效学信息     │
+  │ Exact Query  │    │ Semantic Vector  │
+  │              │    │    Retrieval     │
+  │ • Interactions│   │ • Mechanism desc │
+  │ • Food contra│    │ • Indications    │
+  │ • Dosage info│    │ • Pharmacodynamics│
   └──────┬───────┘    └────────┬─────────┘
           └─────────┬──────────┘
-                    │ 合并两路召回结果
+                    │ Merge retrieval results
                     ▼
             ┌───────────────┐
-            │  LLM 生成报告  │
-            │  (GPT-4o-mini) │
+            │  LLM Report   │
+            │  Generation   │
+            │ (GPT-4o-mini) │
             └───────────────┘
 ```
 
-**为什么需要两个数据库？**
+**Why two databases?**
 
-| 数据库   | 回答什么问题                                   | 优势                   |
-| -------- | ---------------------------------------------- | ---------------------- |
-| SQLite   | 华法林和阿司匹林**有没有**相互作用？严重程度？ | 精确、快速、无幻觉     |
-| ChromaDB | 这个相互作用的**机制是什么**？为什么会发生？   | 自然语言理解、语义检索 |
+| Database | Answers What Questions | Advantages |
+| -------- | ---------------------- | ---------- |
+| SQLite   | **Do** warfarin and aspirin interact? Severity? | Precise, fast, no hallucinations |
+| ChromaDB | **What's the mechanism** of this interaction? Why does it happen? | Natural language understanding, semantic retrieval |
 
 ---
 
-## 项目文件说明
+## Project Structure
 
 ```
 RAG/
-├── 📄 核心文件
-│   ├── xml_parser.py          数据解析：把 drug_db.xml 写入 SQLite 和 ChromaDB
-│   ├── rag.py                 RAG 核心：召回 + LLM 生成（待改造）
-│   ├── vector_store.py        ChromaDB 向量库服务
-│   ├── knowledge_base.py      知识库管理服务
-│   └── data_configuration.py  全局配置（模型、路径、参数）
+├── 📄 Core Files
+│   ├── xml_parser.py          Data parsing: writes drug_db.xml to SQLite and ChromaDB
+│   ├── rag.py                 RAG core: retrieval + LLM generation (to be refactored)
+│   ├── vector_store.py        ChromaDB vector store service
+│   ├── knowledge_base.py      Knowledge base management service
+│   └── data_configuration.py  Global config (models, paths, parameters)
 │
-├── 🖥️ 应用界面
-│   ├── app_starter.py         主聊天界面（Streamlit）
-│   └── app_file_uploader.py   文件上传管理界面（暂不使用）
+├── 🖥️ Application UI
+│   ├── app_starter.py         Main chat interface (Streamlit)
+│   └── app_file_uploader.py   File upload management interface (not in use)
 │
-├── 🔧 工具文件
-│   ├── file_history_store.py  对话历史持久化存储
-│   ├── check_db.py            向量库状态检查工具
-│   └── evaluation.py          RAG 评估脚本（Hit Rate、MRR、LLM-as-Judge）
+├── 🔧 Utility Files
+│   ├── file_history_store.py  Conversation history persistence
+│   ├── check_db.py            Vector store status checker
+│   └── evaluation.py          RAG evaluation script (Hit Rate, MRR, LLM-as-Judge)
 │
-├── 📦 数据文件（不上传 GitHub，需手动获取）
-│   ├── drug_db.xml.zip        原始数据压缩包（174MB，解压后 1.77GB）
-│   ├── drug_structured.db     SQLite 数据库（xml_parser.py 运行后自动生成）
-│   └── chroma_db/             向量数据库目录（xml_parser.py 运行后自动生成）
+├── 📦 Data Files (not uploaded to GitHub, manual download required)
+│   ├── drug_db.xml.zip        Raw data archive (174MB, 1.77GB uncompressed)
+│   ├── drug_structured.db     SQLite database (auto-generated by xml_parser.py)
+│   └── chroma_db/             Vector database directory (auto-generated by xml_parser.py)
 │
-└── 📝 运行时自动生成
-    ├── chat_history/          对话历史
-    └── md5.text               文件去重记录
+└── 📝 Runtime Generated
+    ├── chat_history/          Conversation history
+    └── md5.text               File deduplication records
 ```
 
 ---
 
-## 环境配置
+## Environment Setup
 
-### 第一步：克隆项目
+### Step 1: Clone the Repository
 
 ```bash
 git clone https://github.com/Yuge-225/RAG4Drug
 cd RAG4Drug
 ```
 
-### 第二步：创建虚拟环境
+### Step 2: Create Virtual Environment
 
 ```bash
 conda create -n drug-rag python=3.11
 conda activate drug-rag
 ```
 
-> 之后每次开始工作前，都需要先激活环境：
+> Remember to activate the environment before each work session:
 >
 > ```bash
 > conda activate drug-rag
 > ```
 
-### 第三步：安装依赖
+### Step 3: Install Dependencies
 
 ```bash
 pip install streamlit \
@@ -141,55 +143,55 @@ pip install streamlit \
             python-dotenv
 ```
 
-安装完成后验证：
+Verify installation:
 
 ```bash
-python -c "import streamlit, langchain, chromadb, openai; print('✅ 所有依赖安装成功')"
+python -c "import streamlit, langchain, chromadb, openai; print('✅ All dependencies installed successfully')"
 ```
 
-### 第四步：获取并配置 OpenAI API Key
+### Step 4: Obtain and Configure OpenAI API Key
 
-**4.1 注册 / 登录 OpenAI**
+**4.1 Register / Login to OpenAI**
 
-前往 [https://platform.openai.com](https://platform.openai.com)，注册或登录账号。
+Go to [https://platform.openai.com](https://platform.openai.com) and register or log in.
 
-**4.2 进入 API Key 管理页面**
+**4.2 Navigate to API Key Management**
 
-登录后点击右上角头像 → 选择 **"API keys"**
+After logging in, click your profile icon → Select **"API keys"**
 
-或直接访问：[https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+Or visit directly: [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys)
 
-**4.3 创建新的 API Key**
+**4.3 Create a New API Key**
 
-1. 点击 **"Create new secret key"**
-2. 给 Key 起一个名字，例如 `drug-rag`
-3. 点击 **"Create secret key"**
-4. **立刻复制**这串 `sk-...` 字符串并保存好，弹窗关闭后将无法再次查看
+1. Click **"Create new secret key"**
+2. Name your key, e.g., `drug-rag`
+3. Click **"Create secret key"**
+4. **Immediately copy** the `sk-...` string and save it securely—you won't be able to view it again after closing the dialog
 
-**4.4 充值（新账号需要）**
+**4.4 Add Credits (required for new accounts)**
 
-前往 [https://platform.openai.com/settings/billing](https://platform.openai.com/settings/billing) 添加付款方式并充值。
+Go to [https://platform.openai.com/settings/billing](https://platform.openai.com/settings/billing) to add a payment method and credits.
 
-本项目费用参考：
+Cost estimates for this project:
 
-- 运行 `xml_parser.py` 解析全量数据：约 **$0.5–1.0**（一次性）
-- 日常问答（GPT-4o-mini）：极低，每次问答约 **$0.001**
+- Running `xml_parser.py` to parse full data: approximately **$0.5–1.0** (one-time)
+- Daily Q&A (GPT-4o-mini): minimal, approximately **$0.001** per query
 
-**4.5 在项目中配置 API Key**
+**4.5 Configure API Key in the Project**
 
-在项目根目录创建 `.env` 文件：
+Create a `.env` file in the project root:
 
 ```bash
 touch .env
 ```
 
-用文本编辑器打开 `.env`，写入以下内容（替换为你自己的 Key）：
+Open `.env` with a text editor and add (replace with your own key):
 
 ```
 OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-**4.6 验证配置是否成功**
+**4.6 Verify Configuration**
 
 ```bash
 python -c "
@@ -197,188 +199,188 @@ from dotenv import load_dotenv
 import os
 load_dotenv()
 key = os.environ.get('OPENAI_API_KEY', '')
-print('✅ API Key 已配置' if key.startswith('sk-') else '❌ 未找到 API Key，请检查 .env 文件')
+print('✅ API Key configured' if key.startswith('sk-') else '❌ API Key not found, please check .env file')
 "
 ```
 
-### 第五步：准备数据文件
+### Step 5: Prepare Data Files
 
 ```bash
 unzip drug_db.xml.zip
-# 解压后得到 drug_db.xml（1.77GB）
+# Extracts to drug_db.xml (1.77GB)
 ```
 
-运行解析脚本，生成 SQLite 数据库和 ChromaDB 向量库：
+Run the parsing script to generate SQLite database and ChromaDB vector store:
 
 ```bash
 python xml_parser.py --xml drug_db.xml
 ```
 
-预计耗时 **15–20 分钟**，运行过程中会显示实时进度。完成后自动生成：
+Estimated time: **15–20 minutes**. Real-time progress will be displayed. Upon completion, the following will be generated:
 
-- `drug_structured.db`（约 580MB）
-- `chroma_db/` 文件夹
+- `drug_structured.db` (~580MB)
+- `chroma_db/` directory
 
-> 💡 如果中途中断，直接重新运行即可，脚本支持**断点续传**，会自动跳过已处理的药物，不会重复计费。
+> 💡 If interrupted, simply re-run the script—it supports **checkpoint resumption** and will automatically skip processed drugs without incurring duplicate costs.
 
 ---
 
-## 快速开始
+## Quick Start
 
-### 启动主聊天界面
+### Launch Main Chat Interface
 
 ```bash
 conda activate drug-rag
 streamlit run app_starter.py
 ```
 
-浏览器自动打开，或手动访问 `http://localhost:8501`
+Browser opens automatically, or manually visit `http://localhost:8501`
 
-### 验证数据库状态
+### Verify Database Status
 
 ```bash
 python -c "
 import sqlite3
 conn = sqlite3.connect('drug_structured.db')
-print('药物总数:    ', conn.execute('SELECT COUNT(*) FROM drugs').fetchone()[0])
-print('相互作用数:  ', conn.execute('SELECT COUNT(*) FROM drug_interactions').fetchone()[0])
-print('同义词数:    ', conn.execute('SELECT COUNT(*) FROM synonyms').fetchone()[0])
+print('Total drugs:      ', conn.execute('SELECT COUNT(*) FROM drugs').fetchone()[0])
+print('Interactions:     ', conn.execute('SELECT COUNT(*) FROM drug_interactions').fetchone()[0])
+print('Synonyms:         ', conn.execute('SELECT COUNT(*) FROM synonyms').fetchone()[0])
 conn.close()
 "
 ```
 
-正常输出应为：
+Expected output:
 
 ```
-药物总数:     19830
-相互作用数:   2910010
-同义词数:     1049999
-```
-
----
-
-## 当前进度
-
-### ✅ Step 1：XML 数据解析（已完成）
-
-从 DrugBank XML（1.77GB）解析并写入两个数据库：
-
-**SQLite（结构化数据）**
-
-| 表名              | 数据量       | 用途                               |
-| ----------------- | ------------ | ---------------------------------- |
-| drugs             | 19,830 行    | 药物基本信息（名称、半衰期、分组） |
-| synonyms          | 1,049,999 行 | 所有药物别名，NER 实体识别用       |
-| drug_interactions | 2,910,010 行 | 药物相互作用，RAG 核心数据         |
-| food_interactions | 2,549 行     | 食物禁忌                           |
-| dosages           | ~30,000 行   | 剂量信息                           |
-| enzymes           | ~40,000 行   | CYP450 代谢酶信息                  |
-| parse_progress    | 19,830 行    | 断点续传进度记录                   |
-
-**ChromaDB（向量数据）**
-
-- 共 26,980 个向量块
-- 索引字段：`mechanism-of-action`、`description`、`indication`、`pharmacodynamics`
-- 用于语义检索药理机制和描述文本
-
-**相互作用严重程度分布**
-
-```
-moderate:  2,270,541 条  (78.0%)
-unknown:     638,999 条  (22.0%)
-severe:           54 条  ( 0.0%)
-minor:           416 条  ( 0.0%)
-```
-
-> `severe` 占比偏低是已知问题，DrugBank 原文描述格式不统一导致部分严重相互作用被归类为 `unknown`，后续优化时会改进 severity 提取逻辑。
-
----
-
-### ⏳ Step 2：改造 rag.py（进行中）
-
-**目标**：将现有单路召回（仅 ChromaDB）改为双路召回（SQLite + ChromaDB）
-
-**需要新建** `drug_sql_retriever.py`
-
-- NER：调用 LLM 从用户输入中提取药物名 → 查 `synonyms` 表映射为 DrugBank ID
-- SQL 查询：用 Drug ID 查询相互作用记录、食物禁忌、剂量信息
-
-**需要修改** `rag.py`
-
-- System prompt 改为临床药师角色
-- 召回逻辑改为双路并行，合并后送入 LLM
-
----
-
-### Step 3：系统测试
-
-计划测试用例：
-
-| 测试类型   | 输入示例                                   | 预期结果                       |
-| ---------- | ------------------------------------------ | ------------------------------ |
-| 两药联用   | "华法林和阿司匹林能一起吃吗？"             | 召回 SEVERE 级相互作用记录     |
-| 三药联用   | "华法林、阿司匹林、布洛芬同时服用安全吗？" | 召回所有两两组合的相互作用     |
-| 无记录边界 | "华法林和维生素C有相互作用吗？"            | 诚实回答"数据库无记录"，不编造 |
-
----
-
-### Step 4：评估
-
-复用现有 `evaluation.py`，仅需将生成问题的 prompt 替换为药物场景。
-
-| 指标         | 含义                                   |
-| ------------ | -------------------------------------- |
-| Hit Rate     | 正确答案是否出现在召回结果中           |
-| MRR          | 正确答案的召回排名（越靠前越好）       |
-| Faithfulness | LLM 回答是否完全基于召回内容，没有幻觉 |
-| Correctness  | LLM 回答与标准答案是否语义一致         |
-
----
-
-### Step 5：根据评估结果优化
-
----
-
-### Step 6：（可选）加入 Neo4j 知识图谱
-
-处理 DrugBank 未直接记录的**间接相互作用**，通过 CYP450 酶路径推理：
-
-```
-例：华法林 + 青霉素
-DrugBank 无直接相互作用记录
-但：华法林 → 由 CYP2C9 代谢
-    青霉素 → 抑制 CYP2C9
-→ 图谱推理：存在间接相互作用风险，华法林血药浓度可能升高
+Total drugs:       19830
+Interactions:      2910010
+Synonyms:          1049999
 ```
 
 ---
 
-## 注意事项
+## Current Progress
 
-### .gitignore 说明
+### ✅ Step 1: XML Data Parsing (Completed)
 
-以下文件不会被上传到 GitHub：
+Parsed DrugBank XML (1.77GB) and wrote to two databases:
+
+**SQLite (Structured Data)**
+
+| Table | Row Count | Purpose |
+| ----- | --------- | ------- |
+| drugs | 19,830 | Basic drug info (name, half-life, groups) |
+| synonyms | 1,049,999 | All drug aliases for NER entity recognition |
+| drug_interactions | 2,910,010 | Drug interactions, core RAG data |
+| food_interactions | 2,549 | Food contraindications |
+| dosages | ~30,000 | Dosage information |
+| enzymes | ~40,000 | CYP450 metabolic enzyme info |
+| parse_progress | 19,830 | Checkpoint resumption progress |
+
+**ChromaDB (Vector Data)**
+
+- Total: 26,980 vector chunks
+- Indexed fields: `mechanism-of-action`, `description`, `indication`, `pharmacodynamics`
+- Used for semantic retrieval of pharmacological mechanisms and descriptions
+
+**Interaction Severity Distribution**
 
 ```
-drug_db.xml          # 原始数据，1.77GB
-drug_db.xml.zip      # 压缩版，174MB （微信）
-drug_structured.db   # SQLite 数据库，580MB
-chroma_db/           # 向量数据库目录
-chat_history/        # 对话历史
-md5.text             # 去重记录
-.env                 # API Key，根据环境变量去配置
+moderate:  2,270,541  (78.0%)
+unknown:     638,999  (22.0%)
+severe:           54  ( 0.0%)
+minor:           416  ( 0.0%)
 ```
 
-### 技术栈
+> The low `severe` count is a known issue—inconsistent formatting in DrugBank descriptions causes some severe interactions to be classified as `unknown`. Severity extraction logic will be improved in future optimizations.
 
-| 组件         | 选型                            |
-| ------------ | ------------------------------- |
-| LLM          | GPT-4o-mini (OpenAI)            |
-| Embedding    | text-embedding-3-large (OpenAI) |
-| 向量数据库   | ChromaDB                        |
-| 结构化数据库 | SQLite                          |
-| RAG 框架     | LangChain                       |
-| 前端界面     | Streamlit                       |
-| 数据来源     | DrugBank XML                    |
+---
+
+### ⏳ Step 2: Refactoring rag.py (In Progress)
+
+**Goal**: Convert existing single-path retrieval (ChromaDB only) to dual-path retrieval (SQLite + ChromaDB)
+
+**New file needed** `drug_sql_retriever.py`
+
+- NER: Call LLM to extract drug names from user input → Query `synonyms` table to map to DrugBank IDs
+- SQL queries: Use Drug IDs to query interaction records, food contraindications, dosage info
+
+**Modifications needed** `rag.py`
+
+- Change system prompt to clinical pharmacist persona
+- Modify retrieval logic to dual-path parallel, merge results before sending to LLM
+
+---
+
+### Step 3: System Testing
+
+Planned test cases:
+
+| Test Type | Input Example | Expected Result |
+| --------- | ------------- | --------------- |
+| Two-drug combo | "Can I take warfarin and aspirin together?" | Retrieve SEVERE interaction record |
+| Three-drug combo | "Is it safe to take warfarin, aspirin, and ibuprofen together?" | Retrieve all pairwise interactions |
+| No record edge case | "Do warfarin and vitamin C interact?" | Honestly answer "no record in database," no fabrication |
+
+---
+
+### Step 4: Evaluation
+
+Reuse existing `evaluation.py`, only need to replace the question generation prompt with drug scenarios.
+
+| Metric | Description |
+| ------ | ----------- |
+| Hit Rate | Whether correct answer appears in retrieval results |
+| MRR | Ranking of correct answer in retrieval (higher is better) |
+| Faithfulness | Whether LLM answer is fully based on retrieved content, no hallucinations |
+| Correctness | Whether LLM answer is semantically consistent with ground truth |
+
+---
+
+### Step 5: Optimize Based on Evaluation Results
+
+---
+
+### Step 6: Add Neo4j Knowledge Graph
+
+Handle **indirect interactions** not directly recorded in DrugBank, inferred through CYP450 enzyme pathways:
+
+```
+Example: Warfarin + Penicillin
+DrugBank has no direct interaction record
+But: Warfarin → metabolized by CYP2C9
+     Penicillin → inhibits CYP2C9
+→ Graph inference: indirect interaction risk exists, warfarin blood concentration may increase
+```
+
+---
+
+## Notes
+
+### .gitignore Explanation
+
+The following files will not be uploaded to GitHub:
+
+```
+drug_db.xml          # Raw data, 1.77GB
+drug_db.xml.zip      # Compressed version, 174MB
+drug_structured.db   # SQLite database, 580MB
+chroma_db/           # Vector database directory
+chat_history/        # Conversation history
+md5.text             # Deduplication records
+.env                 # API Key, configure via environment variables
+```
+
+### Tech Stack
+
+| Component | Selection |
+| --------- | --------- |
+| LLM | GPT-4o-mini (OpenAI) |
+| Embedding | text-embedding-3-large (OpenAI) |
+| Vector Database | ChromaDB |
+| Structured Database | SQLite |
+| RAG Framework | LangChain |
+| Frontend UI | Streamlit |
+| Data Source | DrugBank XML |
 
 ---
