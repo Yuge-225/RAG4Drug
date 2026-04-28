@@ -26,6 +26,9 @@ Run:
 import json
 import time
 import re
+import sys
+import platform
+import psutil
 from pathlib import Path
 from datetime import datetime
 from collections import defaultdict
@@ -41,6 +44,26 @@ RESULTS_PATH  = Path("./eval_results.json")
 EXCEL_PATH    = Path("./eval_results.xlsx")
 SLEEP_SEC     = 1.2   # seconds between API calls
 
+_process = psutil.Process()
+
+
+def system_info() -> dict:
+    """Collect once at evaluation start and embed in results."""
+    mem = psutil.virtual_memory()
+    return {
+        "python_version": sys.version.split()[0],
+        "platform":       platform.platform(),
+        "cpu_count":      psutil.cpu_count(logical=True),
+        "total_ram_gb":   round(mem.total / 1024**3, 1),
+        "model":          "gpt-4o-mini",
+        "eval_date":      datetime.now().strftime("%Y-%m-%d %H:%M"),
+    }
+
+
+def measure_memory_mb() -> float:
+    """Current process RSS memory in MB."""
+    return round(_process.memory_info().rss / 1024**2, 1)
+
 
 # ══════════════════════════════════════════════════════════════
 # LLM Alone (no retrieval context)
@@ -54,26 +77,53 @@ LLM_ALONE_SYSTEM = (
     "say so clearly rather than guessing."
 )
 
-def get_llm_alone_response(llm: ChatOpenAI, question: str) -> str:
+def get_llm_alone_response(llm: ChatOpenAI, question: str) -> dict:
+    """Returns dict with answer, latency_s, memory_mb."""
     messages = [
         SystemMessage(content=LLM_ALONE_SYSTEM),
         HumanMessage(content=question),
     ]
-    return llm.invoke(messages).content
+    mem_before = measure_memory_mb()
+    t0 = time.perf_counter()
+    content = llm.invoke(messages).content
+    latency = round(time.perf_counter() - t0, 3)
+    mem_after = measure_memory_mb()
+    return {
+        "answer":      content,
+        "latency_s":   latency,
+        "memory_mb":   mem_after,
+        "memory_delta_mb": round(mem_after - mem_before, 1),
+    }
 
 
 # ══════════════════════════════════════════════════════════════
 # RAG Response
 # ══════════════════════════════════════════════════════════════
 
-def get_rag_response(rag_service, question: str, session_id: str) -> tuple:
-    """Returns (response_text, context_str)."""
+def get_rag_response(rag_service, question: str, session_id: str) -> dict:
+    """Returns dict with answer, context_str, latency_s, memory_mb, hit."""
+    mem_before = measure_memory_mb()
+    t0 = time.perf_counter()
     context = rag_service.retrieve(question)
     response = rag_service.chain.invoke(
         {"question": question},
         config={"configurable": {"session_id": session_id}},
     )
-    return response, context
+    latency = round(time.perf_counter() - t0, 3)
+    mem_after = measure_memory_mb()
+
+    # Hit Rate: read from instance variable (raw dict, not parsed text)
+    sql_result = getattr(rag_service, "last_sql_result", {})
+    hit = len(sql_result.get("interactions", [])) > 0
+
+    return {
+        "answer":          response,
+        "context":         context,
+        "latency_s":       latency,
+        "memory_mb":       mem_after,
+        "memory_delta_mb": round(mem_after - mem_before, 1),
+        "hit":             hit,
+    }
 
 
 # ══════════════════════════════════════════════════════════════
@@ -201,6 +251,9 @@ def run_evaluation() -> list:
     rag = RagService()
     print("RAG ready.\n")
 
+    sysinfo = system_info()
+    print(f"System: {sysinfo['platform']}  Python {sysinfo['python_version']}  RAM {sysinfo['total_ram_gb']}GB\n")
+
     total = len(eval_set)
     for i, item in enumerate(eval_set, 1):
         item_id  = item["id"]
@@ -212,35 +265,57 @@ def run_evaluation() -> list:
             print(f"[{i:02d}/{total}] {item_id} — skip")
             continue
 
-        print(f"[{i:02d}/{total}] {item_id} [{category:10s}] {question[:65]}")
+        sep = "─" * 70
+        print(f"\n{sep}")
+        print(f"[{i:02d}/{total}] {item_id}  [{category}]")
+        print(f"  Q: {question[:80]}")
+        print(sep)
 
-        # 1. LLM alone
+        # Step 1: LLM alone
+        print(f"  Step 1/4  LLM alone ...", end="", flush=True)
         try:
-            llm_resp = get_llm_alone_response(llm, question)
+            llm_result = get_llm_alone_response(llm, question)
+            print(f"  done  ({llm_result['latency_s']:.1f}s, {llm_result['memory_mb']:.0f}MB)")
         except Exception as e:
-            llm_resp = f"ERROR: {e}"
+            llm_result = {"answer": f"ERROR: {e}", "latency_s": None,
+                          "memory_mb": None, "memory_delta_mb": None}
+            print(f"  ERROR: {e}")
         time.sleep(SLEEP_SEC)
 
-        # 2. RAG
+        # Step 2: RAG retrieve + generate
+        print(f"  Step 2/4  RAG retrieve + generate ...", end="", flush=True)
         try:
-            rag_resp, rag_ctx = get_rag_response(rag, question, session_id=item_id)
+            rag_result = get_rag_response(rag, question, session_id=item_id)
+            print(f"  done  ({rag_result['latency_s']:.1f}s, {rag_result['memory_mb']:.0f}MB,"
+                  f" hit={rag_result['hit']})")
         except Exception as e:
-            rag_resp = f"ERROR: {e}"
-            rag_ctx  = ""
+            rag_result = {"answer": f"ERROR: {e}", "context": "", "latency_s": None,
+                          "memory_mb": None, "memory_delta_mb": None, "hit": None}
+            print(f"  ERROR: {e}")
         time.sleep(SLEEP_SEC)
 
-        # 3. Judge LLM alone
+        # Step 3: Judge LLM alone
+        print(f"  Step 3/4  Judge LLM response ...", end="", flush=True)
         try:
-            llm_scores = judge_response(judge_llm, question, gt, category, llm_resp)
+            llm_scores = judge_response(judge_llm, question, gt, category, llm_result["answer"])
+            print(f"  done  (hall={llm_scores.get('hallucination_score')},"
+                  f" faith={llm_scores.get('faithfulness_score')},"
+                  f" comp={llm_scores.get('completeness_score')})")
         except Exception as e:
             llm_scores = {"reasoning": f"judge error: {e}"}
+            print(f"  ERROR: {e}")
         time.sleep(SLEEP_SEC)
 
-        # 4. Judge RAG
+        # Step 4: Judge RAG
+        print(f"  Step 4/4  Judge RAG response ...", end="", flush=True)
         try:
-            rag_scores = judge_response(judge_llm, question, gt, category, rag_resp)
+            rag_scores = judge_response(judge_llm, question, gt, category, rag_result["answer"])
+            print(f"  done  (hall={rag_scores.get('hallucination_score')},"
+                  f" faith={rag_scores.get('faithfulness_score')},"
+                  f" comp={rag_scores.get('completeness_score')})")
         except Exception as e:
             rag_scores = {"reasoning": f"judge error: {e}"}
+            print(f"  ERROR: {e}")
         time.sleep(SLEEP_SEC)
 
         record = {
@@ -248,9 +323,17 @@ def run_evaluation() -> list:
             "category":     category,
             "question":     question,
             "ground_truth": gt,
-            "llm_response": llm_resp,
-            "rag_response": rag_resp,
-            "rag_context":  rag_ctx[:3000],
+            "system_info":  sysinfo,
+            "llm_response":        llm_result["answer"],
+            "llm_latency_s":       llm_result["latency_s"],
+            "llm_memory_mb":       llm_result["memory_mb"],
+            "llm_memory_delta_mb": llm_result["memory_delta_mb"],
+            "rag_response":        rag_result["answer"],
+            "rag_context":         rag_result["context"][:3000],
+            "rag_latency_s":       rag_result["latency_s"],
+            "rag_memory_mb":       rag_result["memory_mb"],
+            "rag_memory_delta_mb": rag_result["memory_delta_mb"],
+            "rag_hit":             rag_result["hit"],
             "llm_scores":   llm_scores,
             "rag_scores":   rag_scores,
         }
@@ -258,14 +341,9 @@ def run_evaluation() -> list:
         RESULTS_PATH.write_text(
             json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8"
         )
+        print(f"  Checkpoint saved ({len(results)}/{total})")
 
-        lh = llm_scores.get("hallucination_score")
-        lf = llm_scores.get("faithfulness_score")
-        rh = rag_scores.get("hallucination_score")
-        rf = rag_scores.get("faithfulness_score")
-        print(f"         LLM hall={lh} faith={lf}  |  RAG hall={rh} faith={rf}")
-
-    print(f"\nAll done. {len(results)} results in {RESULTS_PATH}")
+    print(f"\nAll done. {len(results)} results saved to {RESULTS_PATH}")
     return results
 
 
@@ -347,8 +425,42 @@ def build_excel(results: list):
                 row.append(round(m * mult, 2) if m is not None else "N/A")
         ws1.append(row)
 
+    # Hit Rate row (RAG only)
+    hr_row = ["Hit Rate (%, RAG only)"]
+    for cat in CATEGORIES:
+        subset = results if cat == "ALL" else [r for r in results if r["category"] == cat]
+        has_rec_items = [r for r in subset
+                         if r["ground_truth"].get("has_record") is True
+                         or any(p["has_record"] for p in r["ground_truth"].get("pairs", []))]
+        hr_row.append("N/A")
+        hits = [r.get("rag_hit") for r in has_rec_items if r.get("rag_hit") is not None]
+        m = safe_mean(hits)
+        hr_row.append(round(m * 100, 2) if m is not None else "N/A")
+    ws1.append(hr_row)
+
+    # Latency row
+    for label, key in [("Avg Latency (s)", "latency_s")]:
+        row = [label]
+        for cat in CATEGORIES:
+            subset = results if cat == "ALL" else [r for r in results if r["category"] == cat]
+            for prefix in ("llm", "rag"):
+                vals = [r.get(f"{prefix}_{key}") for r in subset]
+                m = safe_mean(vals)
+                row.append(round(m, 2) if m is not None else "N/A")
+        ws1.append(row)
+
+    # Memory row
+    for label, key in [("Avg Memory (MB)", "memory_mb")]:
+        row = [label]
+        for cat in CATEGORIES:
+            subset = results if cat == "ALL" else [r for r in results if r["category"] == cat]
+            for prefix in ("llm", "rag"):
+                vals = [r.get(f"{prefix}_{key}") for r in subset]
+                m = safe_mean(vals)
+                row.append(round(m, 1) if m is not None else "N/A")
+        ws1.append(row)
+
     style_header_row(ws1, 1, HDR_FILL)
-    # alternating LLM/RAG colours in row 2
     for j, cell in enumerate(ws1[2]):
         if j == 0:
             cell.fill = HDR_FILL
@@ -363,7 +475,7 @@ def build_excel(results: list):
     for col_idx in range(2, 2 + len(CATEGORIES) * 2):
         ws1.column_dimensions[get_column_letter(col_idx)].width = 10
 
-    # Sample counts block
+    # Sample counts
     from collections import Counter
     ws1.append([])
     ws1.append(["Category", "N items"])
@@ -372,15 +484,25 @@ def build_excel(results: list):
         ws1.append([cat, cats_cnt.get(cat, 0)])
     ws1.append(["TOTAL", len(results)])
 
+    # System info block
+    if results and results[0].get("system_info"):
+        si = results[0]["system_info"]
+        ws1.append([])
+        ws1.append(["System Info", ""])
+        for k, v in si.items():
+            ws1.append([k, str(v)])
+
     # ── Sheet 2: Per-Question Results ─────────────────────────
     ws2 = wb.create_sheet("Per-Question Results")
     ws2.freeze_panes = "A2"
 
     hdrs = [
         "ID", "Category", "Question",
-        "GT Severity", "GT Has Record",
+        "GT Severity", "GT Has Record", "RAG Hit",
+        "LLM Latency(s)", "LLM Memory(MB)",
         "LLM Hallucination", "LLM Faithfulness", "LLM Completeness",
         "LLM Sev Acc", "LLM No-Rec Refusal", "LLM Reasoning",
+        "RAG Latency(s)", "RAG Memory(MB)",
         "RAG Hallucination", "RAG Faithfulness", "RAG Completeness",
         "RAG Sev Acc", "RAG No-Rec Refusal", "RAG Reasoning",
     ]
@@ -404,18 +526,22 @@ def build_excel(results: list):
 
         ws2.append([
             r["id"], r["category"], r["question"],
-            sev_str, has_rec,
+            sev_str, has_rec, r.get("rag_hit", "N/A"),
+            r.get("llm_latency_s"), r.get("llm_memory_mb"),
             ls.get("hallucination_score"), ls.get("faithfulness_score"),
             ls.get("completeness_score"),  ls.get("severity_accuracy"),
             ls.get("no_record_refusal"),   ls.get("reasoning", ""),
+            r.get("rag_latency_s"), r.get("rag_memory_mb"),
             rs.get("hallucination_score"), rs.get("faithfulness_score"),
             rs.get("completeness_score"),  rs.get("severity_accuracy"),
             rs.get("no_record_refusal"),   rs.get("reasoning", ""),
         ])
 
-    widths2 = {"A": 10, "B": 12, "C": 40, "D": 22, "E": 12,
-               "F": 14, "G": 14, "H": 14, "I": 12, "J": 15, "K": 38,
-               "L": 14, "M": 14, "N": 14, "O": 12, "P": 15, "Q": 38}
+    widths2 = {"A": 10, "B": 12, "C": 38, "D": 22, "E": 12, "F": 9,
+               "G": 13, "H": 14,
+               "I": 14, "J": 14, "K": 14, "L": 12, "M": 15, "N": 38,
+               "O": 13, "P": 14,
+               "Q": 14, "R": 14, "S": 14, "T": 12, "U": 15, "V": 38}
     for col, w in widths2.items():
         ws2.column_dimensions[col].width = w
 
@@ -476,6 +602,17 @@ def print_summary(results: list):
         rag_nr = safe_mean([r["rag_scores"].get("no_record_refusal") for r in no_rec])
         if llm_nr is not None and rag_nr is not None:
             print(f"{'No-Record Refusal (%)':<28} {llm_nr*100:>7.1f}% {rag_nr*100:>7.1f}%  {(rag_nr-llm_nr)*100:>+7.1f}%")
+
+    # Latency & Memory
+    llm_lat = safe_mean([r.get("llm_latency_s") for r in results])
+    rag_lat = safe_mean([r.get("rag_latency_s") for r in results])
+    if llm_lat and rag_lat:
+        print(f"{'Avg Latency (s)':<28} {llm_lat:>8.2f} {rag_lat:>8.2f}  {rag_lat-llm_lat:>+8.2f}")
+
+    llm_mem = safe_mean([r.get("llm_memory_mb") for r in results])
+    rag_mem = safe_mean([r.get("rag_memory_mb") for r in results])
+    if llm_mem and rag_mem:
+        print(f"{'Avg Memory (MB)':<28} {llm_mem:>8.1f} {rag_mem:>8.1f}  {rag_mem-llm_mem:>+8.1f}")
 
     print("=" * 55)
 

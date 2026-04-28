@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drug Interaction Knowledge Graph</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Inter:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg: #0a0e17;
+    --panel: #0f1520;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --severe: #ff3b6b;
+    --moderate: #ff9500;
+    --minor: #30d158;
+    --unknown: #636366;
+    --text: #e5e7eb;
+    --text-dim: #6b7280;
+    --drug: #3b82f6;
+    --focus: #f59e0b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+
+  .logo { display: flex; align-items: center; gap: 12px; }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .logo-text { font-size: 15px; font-weight: 700; letter-spacing: 0.05em; color: var(--accent); }
+  .logo-sub  { font-size: 11px; color: var(--text-dim); font-family: 'JetBrains Mono', monospace; letter-spacing: 0.1em; }
+
+  .header-stats { display: flex; gap: 24px; }
+  .stat { text-align: center; }
+  .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: var(--accent); }
+  .stat-label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+
+  .main { display: flex; flex: 1; overflow: hidden; }
+
+  .left-panel {
+    width: 280px; flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  .panel-section { padding: 16px; border-bottom: 1px solid var(--border); }
+  .panel-title {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--text-dim); margin-bottom: 12px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .patient-drugs { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+
+  .drug-tag {
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 6px; padding: 6px 10px; font-size: 12px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .drug-tag:hover { background: rgba(59,130,246,0.2); }
+  .drug-tag .remove { color: var(--text-dim); font-size: 14px; line-height: 1; }
+
+  .drug-input-row { display: flex; gap: 6px; }
+  .drug-input {
+    flex: 1; background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 12px;
+    font-family: inherit; outline: none; transition: border-color 0.15s;
+  }
+  .drug-input:focus { border-color: var(--accent); }
+  .drug-input::placeholder { color: var(--text-dim); }
+
+  .btn {
+    background: rgba(0,212,255,0.15); border: 1px solid rgba(0,212,255,0.4);
+    color: var(--accent); border-radius: 6px; padding: 6px 12px;
+    font-size: 11px; cursor: pointer; transition: all 0.15s;
+    font-family: inherit; white-space: nowrap;
+  }
+  .btn:hover { background: rgba(0,212,255,0.25); }
+
+  .btn-check {
+    width: 100%; margin-top: 8px; padding: 8px; font-size: 12px;
+    background: rgba(245,158,11,0.15); border-color: rgba(245,158,11,0.5); color: var(--focus);
+  }
+  .btn-check:hover { background: rgba(245,158,11,0.25); }
+
+  .risk-panel { display: none; margin-top: 10px; }
+  .risk-badge {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; border-radius: 8px; margin-bottom: 8px;
+    font-weight: 600; font-size: 13px;
+  }
+  .risk-HIGH   { background: rgba(255,59,107,0.15);  border: 1px solid rgba(255,59,107,0.4);  color: var(--severe); }
+  .risk-MEDIUM { background: rgba(255,149,0,0.15);   border: 1px solid rgba(255,149,0,0.4);   color: var(--moderate); }
+  .risk-LOW    { background: rgba(48,209,88,0.15);   border: 1px solid rgba(48,209,88,0.4);   color: var(--minor); }
+  .risk-SAFE   { background: rgba(99,99,102,0.15);   border: 1px solid rgba(99,99,102,0.4);   color: var(--text-dim); }
+
+  .interaction-list { display: flex; flex-direction: column; gap: 5px; max-height: 220px; overflow-y: auto; }
+  .interaction-item {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-left: 3px solid; border-radius: 4px; padding: 7px 10px;
+    font-size: 11px; cursor: pointer; transition: background 0.15s;
+  }
+  .interaction-item:hover { background: rgba(255,255,255,0.07); }
+  .interaction-item.severe   { border-left-color: var(--severe); }
+  .interaction-item.moderate { border-left-color: var(--moderate); }
+  .interaction-item.minor    { border-left-color: var(--minor); }
+  .interaction-item.unknown  { border-left-color: var(--unknown); }
+  .interaction-drugs { font-weight: 500; margin-bottom: 3px; }
+  .interaction-desc  { color: var(--text-dim); line-height: 1.4; }
+
+  .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-dim); }
+  .legend-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-line { width: 20px; height: 2px; flex-shrink: 0; border-radius: 1px; }
+
+  .controls { display: flex; gap: 6px; flex-wrap: wrap; }
+  .toggle-btn {
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    color: var(--text-dim); border-radius: 4px; padding: 4px 8px;
+    font-size: 10px; cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .toggle-btn.active { background: rgba(0,212,255,0.1); border-color: rgba(0,212,255,0.4); color: var(--accent); }
+
+  .graph-area { flex: 1; position: relative; overflow: hidden; }
+  svg { width: 100%; height: 100%; }
+
+  .node circle { stroke-width: 1.5; cursor: pointer; transition: filter 0.2s; }
+  .node:hover circle { filter: brightness(1.3); }
+  .node text {
+    font-family: 'Inter', sans-serif; font-size: 11px;
+    fill: #e5e7eb; pointer-events: none; text-anchor: middle; dominant-baseline: middle;
+  }
+  .link { stroke-opacity: 0.6; fill: none; }
+  .link.severe   { stroke: var(--severe);   stroke-width: 2.5; }
+  .link.moderate { stroke: var(--moderate); stroke-width: 1.8; }
+  .link.minor    { stroke: var(--minor);    stroke-width: 1.2; }
+  .link.unknown  { stroke: var(--unknown);  stroke-width: 1; }
+
+  .tooltip {
+    position: absolute; background: rgba(10,14,23,0.95);
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px;
+    font-size: 12px; max-width: 280px; pointer-events: none; z-index: 100;
+    backdrop-filter: blur(10px); display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .tooltip-name  { font-size: 14px; font-weight: 600; color: var(--accent); margin-bottom: 6px; }
+  .tooltip-id    { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); margin-bottom: 8px; }
+  .tooltip-row   { display: flex; gap: 6px; margin-bottom: 4px; align-items: flex-start; }
+  .tooltip-label { color: var(--text-dim); min-width: 70px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; padding-top: 1px; }
+  .tooltip-val   { color: var(--text); line-height: 1.5; font-size: 11px; }
+
+  .edge-tooltip {
+    position: absolute; background: rgba(10,14,23,0.95);
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px;
+    font-size: 12px; max-width: 260px; pointer-events: none; z-index: 100; display: none;
+  }
+
+  .status-bar { position: absolute; bottom: 12px; right: 16px; display: flex; gap: 8px; align-items: center; }
+  .status-item {
+    background: rgba(15,21,32,0.85); border: 1px solid var(--border);
+    border-radius: 4px; padding: 4px 10px; font-size: 10px; color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace; backdrop-filter: blur(6px);
+  }
+
+  .scrollable { overflow-y: auto; flex: 1; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .cyp-item { background: rgba(124,58,237,0.1); border: 1px solid rgba(124,58,237,0.3); border-radius: 4px; padding: 5px 8px; font-size: 11px; margin-bottom: 4px; }
+  .cyp-enzyme { color: var(--accent2); font-weight: 600; font-family: 'JetBrains Mono', monospace; }
+
+  /* RAG badge shown when loaded via URL params */
+  .rag-badge {
+    display: none;
+    align-items: center; gap: 6px;
+    background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.3);
+    border-radius: 6px; padding: 6px 10px; font-size: 11px;
+    color: var(--accent); margin-bottom: 8px;
+  }
+
+  /* ── Compact legend overlay (visible in embedded/Streamlit mode) ── */
+  .legend-overlay {
+    display: none;   /* shown via _EMBED_OVERRIDE injection */
+    position: absolute;
+    bottom: 44px; left: 14px;
+    background: rgba(10, 14, 23, 0.90);
+    border: 1px solid #1e2d45;
+    border-radius: 10px;
+    padding: 12px 15px;
+    backdrop-filter: blur(8px);
+    z-index: 50;
+    min-width: 148px;
+  }
+  .lo-title {
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.14em;
+    color: #6b7280; font-family: 'JetBrains Mono', monospace;
+    margin-bottom: 9px;
+  }
+  .lo-row {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: #d1d5db; margin-bottom: 6px;
+  }
+  .lo-row:last-child { margin-bottom: 0; }
+  .lo-divider { height: 1px; background: #1e2d45; margin: 8px 0; }
+  .lo-node {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  }
+  .lo-focus {
+    background: #f59e0b;
+    border: 2px solid #fbbf24;
+    box-shadow: 0 0 8px rgba(245,158,11,0.7), 0 0 16px rgba(245,158,11,0.3);
+  }
+  .lo-other { background: #3b82f6; opacity: 0.45; }
+  .lo-edge  { width: 22px; height: 3px; border-radius: 2px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⬡</div>
+    <div>
+      <div class="logo-text">DrugBank KG</div>
+      <div class="logo-sub">DRUG INTERACTION KNOWLEDGE GRAPH</div>
+    </div>
+  </div>
+  <div class="header-stats">
+    <div class="stat"><div class="stat-value" id="stat-nodes">15</div><div class="stat-label">Drug Nodes</div></div>
+    <div class="stat"><div class="stat-value" id="stat-edges">30</div><div class="stat-label">Interactions</div></div>
+    <div class="stat"><div class="stat-value" id="stat-severe" style="color:var(--severe)">10</div><div class="stat-label">Severe</div></div>
+    <div class="stat"><div class="stat-value" id="stat-moderate" style="color:var(--moderate)">12</div><div class="stat-label">Moderate</div></div>
+  </div>
+</header>
+
+<div class="main">
+  <div class="left-panel">
+
+    <div class="panel-section">
+      <div class="panel-title">🩺 Patient Drug Check</div>
+      <div class="rag-badge" id="rag-badge">⚡ Loaded from RAG response</div>
+      <div class="patient-drugs" id="patient-drug-list"></div>
+      <div class="drug-input-row">
+        <input class="drug-input" id="drug-input" placeholder="Enter drug name or ID..." list="drug-suggestions">
+        <datalist id="drug-suggestions"></datalist>
+        <button class="btn" onclick="addDrug()">+ Add</button>
+      </div>
+      <button class="btn btn-check" onclick="checkInteractions()">⚡ Check Interactions</button>
+
+      <div class="risk-panel" id="risk-panel">
+        <div class="risk-badge" id="risk-badge-result"></div>
+        <div class="interaction-list" id="interaction-list"></div>
+        <div id="cyp-list" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">Legend</div>
+      <div class="legend-grid">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--drug)"></div>Drug Node</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--focus)"></div>Selected Drug</div>
+        <div class="legend-item"><div class="legend-line" style="background:var(--severe)"></div>Severe</div>
+        <div class="legend-item"><div class="legend-line" style="background:var(--moderate)"></div>Moderate</div>
+        <div class="legend-item"><div class="legend-line" style="background:var(--minor)"></div>Minor</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--accent2)"></div>CYP Enzyme</div>
+      </div>
+    </div>
+
+    <div class="panel-section">
+      <div class="panel-title">Filter</div>
+      <div class="controls" id="severity-filters">
+        <button class="toggle-btn active" data-sev="severe"   onclick="toggleFilter(this)">Severe</button>
+        <button class="toggle-btn active" data-sev="moderate" onclick="toggleFilter(this)">Moderate</button>
+        <button class="toggle-btn active" data-sev="minor"    onclick="toggleFilter(this)">Minor</button>
+        <button class="toggle-btn active" data-sev="unknown"  onclick="toggleFilter(this)">Unknown</button>
+      </div>
+    </div>
+
+    <div class="panel-section scrollable">
+      <div class="panel-title">Example Drugs (click to add)</div>
+      <div id="example-list" style="display:flex;flex-direction:column;gap:4px"></div>
+    </div>
+  </div>
+
+  <div class="graph-area" id="graph-area">
+    <svg id="graph-svg"></svg>
+    <div class="tooltip" id="tooltip"></div>
+    <div class="edge-tooltip" id="edge-tooltip"></div>
+    <div class="status-bar">
+      <div class="status-item" id="status-zoom">zoom: 100%</div>
+      <div class="status-item">Drag · Scroll to zoom · Click for details</div>
+    </div>
+
+    <!-- Compact legend — hidden by default, shown in Streamlit embedded mode -->
+    <div class="legend-overlay" id="legend-overlay">
+      <div class="lo-title">Legend</div>
+      <div class="lo-row"><span class="lo-node lo-focus"></span>Selected drug</div>
+      <div class="lo-row"><span class="lo-node lo-other"></span>Other drug</div>
+      <div class="lo-divider"></div>
+      <div class="lo-row"><span class="lo-edge" style="background:var(--severe)"></span>Severe</div>
+      <div class="lo-row"><span class="lo-edge" style="background:var(--moderate)"></span>Moderate</div>
+      <div class="lo-row"><span class="lo-edge" style="background:var(--minor)"></span>Minor</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const graphData = {
+  nodes: [
+    {id:'DB00001',label:'Warfarin',     type:'drug',degree:10,groups:['approved'],cyp_enzymes:['CYP2C9','CYP3A4'],indication:'Anticoagulant for DVT/PE/AFib'},
+    {id:'DB00002',label:'Aspirin',      type:'drug',degree:8, groups:['approved'],cyp_enzymes:['CYP2C9'],indication:'NSAID, antiplatelet for cardiovascular events'},
+    {id:'DB00003',label:'Ibuprofen',    type:'drug',degree:6, groups:['approved'],cyp_enzymes:['CYP2C9','CYP2C8'],indication:'NSAID for pain and inflammation'},
+    {id:'DB00004',label:'Simvastatin',  type:'drug',degree:8, groups:['approved'],cyp_enzymes:['CYP3A4'],indication:'Statin for hypercholesterolemia'},
+    {id:'DB00005',label:'Amlodipine',   type:'drug',degree:5, groups:['approved'],cyp_enzymes:['CYP3A4'],indication:'CCB for hypertension and angina'},
+    {id:'DB00006',label:'Metformin',    type:'drug',degree:2, groups:['approved'],cyp_enzymes:[],indication:'Biguanide for type 2 diabetes'},
+    {id:'DB00007',label:'Clopidogrel',  type:'drug',degree:6, groups:['approved'],cyp_enzymes:['CYP2C19','CYP3A4'],indication:'Antiplatelet for ACS and stroke prevention'},
+    {id:'DB00008',label:'Omeprazole',   type:'drug',degree:4, groups:['approved'],cyp_enzymes:['CYP2C19','CYP3A4'],indication:'PPI for GERD and peptic ulcer'},
+    {id:'DB00009',label:'Digoxin',      type:'drug',degree:3, groups:['approved'],cyp_enzymes:[],indication:'Cardiac glycoside for heart failure and AFib'},
+    {id:'DB00010',label:'Fluconazole',  type:'drug',degree:8, groups:['approved'],cyp_enzymes:['CYP2C9','CYP3A4'],indication:'Antifungal for Candida and Cryptococcus'},
+    {id:'DB00011',label:'Amiodarone',   type:'drug',degree:7, groups:['approved'],cyp_enzymes:['CYP2C9','CYP3A4'],indication:'Class III antiarrhythmic'},
+    {id:'DB00012',label:'Phenytoin',    type:'drug',degree:5, groups:['approved'],cyp_enzymes:['CYP2C9','CYP2C19'],indication:'Anticonvulsant for epilepsy'},
+    {id:'DB00013',label:'Rifampin',     type:'drug',degree:7, groups:['approved'],cyp_enzymes:['CYP3A4','CYP2C9'],indication:'Antibiotic for tuberculosis'},
+    {id:'DB00014',label:'Atorvastatin', type:'drug',degree:5, groups:['approved'],cyp_enzymes:['CYP3A4'],indication:'Statin for hypercholesterolemia'},
+    {id:'DB00015',label:'Lisinopril',   type:'drug',degree:2, groups:['approved'],cyp_enzymes:[],indication:'ACE inhibitor for hypertension and heart failure'},
+  ],
+  edges: [
+    {source:'DB00001',target:'DB00002',severity:'severe',  description:'Increased bleeding risk — additive anticoagulant and antiplatelet effects'},
+    {source:'DB00001',target:'DB00003',severity:'severe',  description:'Significantly increased bleeding risk. NSAIDs inhibit platelet function and cause gastric erosion'},
+    {source:'DB00001',target:'DB00010',severity:'severe',  description:'Fluconazole inhibits CYP2C9, markedly increasing warfarin plasma levels and INR'},
+    {source:'DB00001',target:'DB00011',severity:'severe',  description:'Amiodarone inhibits CYP2C9 and CYP3A4, significantly increases warfarin effect'},
+    {source:'DB00011',target:'DB00004',severity:'severe',  description:'Amiodarone inhibits CYP3A4 increasing statin exposure, risk of myopathy/rhabdomyolysis'},
+    {source:'DB00013',target:'DB00004',severity:'severe',  description:'Rifampin is a potent CYP3A4 inducer, dramatically reducing simvastatin efficacy'},
+    {source:'DB00001',target:'DB00013',severity:'moderate',description:'Rifampin induces CYP enzymes reducing warfarin plasma levels, may lose anticoagulation'},
+    {source:'DB00002',target:'DB00003',severity:'moderate',description:'Additive GI bleeding risk. Ibuprofen may antagonize aspirin antiplatelet effect'},
+    {source:'DB00002',target:'DB00007',severity:'moderate',description:'Increased bleeding risk. Combined use may be beneficial in ACS but requires monitoring'},
+    {source:'DB00004',target:'DB00010',severity:'moderate',description:'Fluconazole inhibits CYP3A4 increasing simvastatin exposure, myopathy risk'},
+    {source:'DB00007',target:'DB00008',severity:'moderate',description:'Omeprazole inhibits CYP2C19, reducing clopidogrel activation and antiplatelet efficacy'},
+    {source:'DB00009',target:'DB00005',severity:'moderate',description:'Amlodipine may increase digoxin plasma levels by inhibiting P-glycoprotein'},
+    {source:'DB00012',target:'DB00001',severity:'moderate',description:'Complex interaction: phenytoin can both inhibit and induce warfarin metabolism'},
+    {source:'DB00014',target:'DB00010',severity:'moderate',description:'Fluconazole inhibits CYP3A4 increasing atorvastatin levels, myopathy risk'},
+    {source:'DB00004',target:'DB00005',severity:'minor',   description:'Amlodipine moderately inhibits CYP3A4, slightly increasing simvastatin exposure'},
+  ]
+};
+
+// ── Injection point — replaced by Python for embedded Streamlit mode ──────────
+var HIGHLIGHT_DRUGS = [];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let patientDrugs = [];
+let activeFilters = new Set(['severe','moderate','minor','unknown']);
+let simulation, svg, linkGroup, nodeGroup, zoomBehavior;
+let currentZoom = 1;
+
+// ── Shared sizing helper (used by renderGraph + applyRadialHighlight) ─────────
+const nodeRadius = d => Math.max(10, Math.min(18, 8 + d.degree * 0.8));
+
+function updateStats() {
+  document.getElementById('stat-nodes').textContent = graphData.nodes.length;
+  document.getElementById('stat-edges').textContent = graphData.edges.length;
+  document.getElementById('stat-severe').textContent   = graphData.edges.filter(e=>e.severity==='severe').length;
+  document.getElementById('stat-moderate').textContent = graphData.edges.filter(e=>e.severity==='moderate').length;
+}
+
+function buildDatalist() {
+  const dl = document.getElementById('drug-suggestions');
+  graphData.nodes.forEach(n => {
+    const opt = document.createElement('option');
+    opt.value = n.label;
+    dl.appendChild(opt);
+  });
+}
+
+function buildExampleList() {
+  const container = document.getElementById('example-list');
+  graphData.nodes.forEach(n => {
+    const el = document.createElement('div');
+    el.className = 'drug-tag';
+    el.innerHTML = `<span>${n.label}</span><span style="color:var(--text-dim);font-size:10px">${n.id}</span>`;
+    el.addEventListener('click', () => { document.getElementById('drug-input').value = n.label; addDrug(); });
+    container.appendChild(el);
+  });
+}
+
+// ── Patient drug management ───────────────────────────────────────────────────
+function addDrug() {
+  const input = document.getElementById('drug-input');
+  const val = input.value.trim();
+  if (!val) return;
+  const node = graphData.nodes.find(n => n.label.toLowerCase() === val.toLowerCase() || n.id === val.toUpperCase());
+  if (!node) { input.style.borderColor='var(--severe)'; setTimeout(()=>input.style.borderColor='',800); return; }
+  if (patientDrugs.find(d=>d.id===node.id)) { input.value=''; return; }
+  patientDrugs.push(node);
+  input.value = '';
+  renderPatientList();
+  applyRadialHighlight();
+  document.getElementById('risk-panel').style.display = 'none';
+}
+
+function removeDrug(id) {
+  patientDrugs = patientDrugs.filter(d=>d.id!==id);
+  renderPatientList();
+  applyRadialHighlight();
+  document.getElementById('risk-panel').style.display = 'none';
+}
+
+function renderPatientList() {
+  const container = document.getElementById('patient-drug-list');
+  container.innerHTML = '';
+  patientDrugs.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'drug-tag';
+    el.innerHTML = `<span style="color:var(--focus);font-weight:500">${d.label}</span><span class="remove" onclick="removeDrug('${d.id}')">×</span>`;
+    container.appendChild(el);
+  });
+}
+
+// ── Check interactions ────────────────────────────────────────────────────────
+function checkInteractions() {
+  if (patientDrugs.length < 2) return;
+  const ids = patientDrugs.map(d=>d.id);
+  const found = [];
+  const seen = new Set();
+
+  for (let i=0;i<ids.length;i++) for (let j=i+1;j<ids.length;j++) {
+    const a=ids[i], b=ids[j];
+    const edge = graphData.edges.find(e=>
+      ((e.source===a&&e.target===b)||(e.source===b&&e.target===a)));
+    const key=[a,b].sort().join('-');
+    if (edge && !seen.has(key)) {
+      seen.add(key);
+      found.push({
+        drug_a: graphData.nodes.find(n=>n.id===edge.source)?.label||edge.source,
+        drug_b: graphData.nodes.find(n=>n.id===edge.target)?.label||edge.target,
+        severity: edge.severity,
+        description: edge.description
+      });
+    }
+  }
+
+  const cypMap = {};
+  ids.forEach(id => {
+    const node = graphData.nodes.find(n=>n.id===id);
+    if (node) node.cyp_enzymes.forEach(cyp => { if(!cypMap[cyp]) cypMap[cyp]=[]; cypMap[cyp].push(node.label); });
+  });
+  const cypConflicts = Object.entries(cypMap).filter(([,drugs])=>drugs.length>1);
+
+  const sev = found.map(f=>f.severity);
+  const overall = sev.includes('severe') ? 'HIGH' : sev.includes('moderate') ? 'MEDIUM' : found.length>0 ? 'LOW' : 'SAFE';
+  const labels = {HIGH:'⚠ HIGH RISK', MEDIUM:'⚡ MEDIUM RISK', LOW:'✓ LOW RISK', SAFE:'✓ SAFE'};
+
+  const badge = document.getElementById('risk-badge-result');
+  badge.className = `risk-badge risk-${overall}`;
+  badge.innerHTML = `${labels[overall]} — ${found.length} interaction(s) found`;
+
+  const list = document.getElementById('interaction-list');
+  list.innerHTML = found.length
+    ? found.map(f=>`
+        <div class="interaction-item ${f.severity}">
+          <div class="interaction-drugs">${f.drug_a} × ${f.drug_b} <span style="font-size:10px;opacity:0.7">[${f.severity}]</span></div>
+          <div class="interaction-desc">${f.description}</div>
+        </div>`).join('')
+    : '<div style="color:var(--text-dim);font-size:12px;padding:6px">No direct interactions found</div>';
+
+  const cypDiv = document.getElementById('cyp-list');
+  cypDiv.innerHTML = cypConflicts.length ? `
+    <div class="panel-title" style="margin-top:6px">CYP Enzyme Conflicts</div>
+    ${cypConflicts.map(([cyp,drugs])=>`
+      <div class="cyp-item">
+        <span class="cyp-enzyme">${cyp}</span>
+        <span style="color:var(--text-dim);font-size:11px"> → ${drugs.join(' + ')}</span>
+      </div>`).join('')}` : '';
+
+  document.getElementById('risk-panel').style.display = 'block';
+  highlightInteractionEdges(found);
+}
+
+// ── D3 Graph ──────────────────────────────────────────────────────────────────
+function initGraph() {
+  const container = document.getElementById('graph-area');
+  const W = container.clientWidth, H = container.clientHeight;
+
+  svg = d3.select('#graph-svg');
+  const defs = svg.append('defs');
+  ['severe','moderate','minor','unknown'].forEach(sev => {
+    const colors={severe:'#ff3b6b',moderate:'#ff9500',minor:'#30d158',unknown:'#636366'};
+    defs.append('marker').attr('id',`arrow-${sev}`)
+      .attr('viewBox','0 -5 10 10').attr('refX',20).attr('refY',0)
+      .attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto')
+      .append('path').attr('d','M0,-5L10,0L0,5').attr('fill',colors[sev]);
+  });
+
+  // Glow filter applied to highlighted (patient) drug nodes
+  const gf = defs.append('filter').attr('id','glow-focus')
+    .attr('x','-60%').attr('y','-60%').attr('width','220%').attr('height','220%');
+  gf.append('feGaussianBlur').attr('in','SourceGraphic').attr('stdDeviation','5').attr('result','blur');
+  const fm = gf.append('feMerge');
+  fm.append('feMergeNode').attr('in','blur');
+  fm.append('feMergeNode').attr('in','SourceGraphic');
+
+  const g = svg.append('g').attr('class','graph-root');
+  linkGroup = g.append('g').attr('class','links');
+  nodeGroup = g.append('g').attr('class','nodes');
+
+  zoomBehavior = d3.zoom().scaleExtent([0.2,4]).on('zoom',e=>{
+    g.attr('transform',e.transform);
+    currentZoom = e.transform.k;
+    document.getElementById('status-zoom').textContent = `zoom: ${Math.round(currentZoom*100)}%`;
+  });
+  svg.call(zoomBehavior);
+
+  const nodes = graphData.nodes.map(d=>({...d}));
+  const edges = graphData.edges.filter(e=>activeFilters.has(e.severity));
+
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(edges).id(d=>d.id).distance(d=>d.severity==='severe'?100:140))
+    .force('charge', d3.forceManyBody().strength(-300))
+    .force('center', d3.forceCenter(W/2,H/2))
+    .force('collision', d3.forceCollide(28));
+
+  renderGraph(nodes, edges);
+
+  simulation.on('tick',()=>{
+    linkGroup.selectAll('line').attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    nodeGroup.selectAll('.node').attr('transform',d=>`translate(${d.x},${d.y})`);
+  });
+
+  updateStats();
+}
+
+function renderGraph(nodes, edges) {
+  const severityColors={severe:'#ff3b6b',moderate:'#ff9500',minor:'#30d158',unknown:'#636366'};
+
+  linkGroup.selectAll('line').data(edges,d=>`${d.source.id||d.source}||${d.target.id||d.target}`)
+    .enter().append('line')
+    .attr('class',d=>`link ${d.severity}`)
+    .attr('stroke',d=>severityColors[d.severity])
+    .attr('stroke-width',d=>({severe:2.5,moderate:1.8,minor:1.2,unknown:1})[d.severity]||1)
+    .attr('marker-end',d=>`url(#arrow-${d.severity})`)
+    .on('mouseover',showEdgeTooltip)
+    .on('mouseout',hideEdgeTooltip);
+
+  const node = nodeGroup.selectAll('.node').data(nodes,d=>d.id).enter().append('g').attr('class','node')
+    .call(d3.drag()
+      .on('start',(e,d)=>{if(!e.active)simulation.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;})
+      .on('drag', (e,d)=>{d.fx=e.x;d.fy=e.y;})
+      .on('end',  (e,d)=>{if(!e.active)simulation.alphaTarget(0);d.fx=null;d.fy=null;}))
+    .on('click',showNodeTooltip)
+    .on('mouseover',highlightNode)
+    .on('mouseout',unhighlightNode);
+
+  node.append('circle')
+    .attr('r',nodeRadius)
+    .attr('fill',d=>patientDrugs.find(p=>p.id===d.id)?'var(--focus)':'var(--drug)')
+    .attr('stroke',d=>patientDrugs.find(p=>p.id===d.id)?'#fbbf24':'#1d4ed8')
+    .attr('fill-opacity',0.9);
+
+  node.append('text')
+    .attr('dy',d=>nodeRadius(d)+12)
+    .attr('font-size','10px').attr('fill','#9ca3af')
+    .text(d=>d.label);
+}
+
+// ── Radial highlight: pulse rings + dim non-focus nodes/edges ────────────────
+function applyRadialHighlight() {
+  const focusIds = new Set(patientDrugs.map(d => d.id));
+  const hasFocus = focusIds.size > 0;
+
+  // Clear previous pulse rings
+  nodeGroup.selectAll('.pulse-ring').remove();
+
+  nodeGroup.selectAll('.node').each(function(d) {
+    const isFocus = focusIds.has(d.id);
+    const g = d3.select(this);
+    const r = nodeRadius(d);
+
+    g.select('circle')
+      .attr('r', isFocus ? r + 3 : r)
+      .attr('fill', isFocus ? 'var(--focus)' : 'var(--drug)')
+      .attr('stroke', isFocus ? '#fbbf24' : '#1d4ed8')
+      .attr('stroke-width', isFocus ? 3 : 1.5)
+      .attr('fill-opacity', hasFocus ? (isFocus ? 1.0 : 0.15) : 0.9)
+      .attr('filter', isFocus ? 'url(#glow-focus)' : null);
+
+    g.select('text')
+      .attr('fill', isFocus ? '#ffffff' : '#9ca3af')
+      .attr('fill-opacity', hasFocus ? (isFocus ? 1.0 : 0.28) : 1.0)
+      .attr('font-weight', isFocus ? '600' : 'normal');
+
+    // Add three staggered expanding pulse rings for focused nodes
+    if (isFocus) {
+      [0, 1, 2].forEach(i => {
+        const ring = g.insert('circle', ':first-child')
+          .attr('class', 'pulse-ring')
+          .attr('r', r + 3)
+          .attr('fill', 'none')
+          .attr('stroke', '#fbbf24')
+          .attr('stroke-width', 2.2 - i * 0.5)
+          .attr('stroke-opacity', 0);
+        animatePulse(ring, r + 3, i * 650);
+      });
+    }
+  });
+
+  // Dim or restore edges based on focus state
+  linkGroup.selectAll('line')
+    .attr('stroke-opacity', d => {
+      if (!hasFocus) return 0.6;
+      const sid = d.source.id || d.source;
+      const tid = d.target.id || d.target;
+      return (focusIds.has(sid) && focusIds.has(tid)) ? 0.92 : 0.06;
+    })
+    .attr('stroke-width', d => {
+      const sid = d.source.id || d.source;
+      const tid = d.target.id || d.target;
+      const focused = hasFocus && focusIds.has(sid) && focusIds.has(tid);
+      const hi = {severe:4.5, moderate:3.5, minor:2.5, unknown:2};
+      const lo = {severe:2.5, moderate:1.8, minor:1.2, unknown:1};
+      return (focused ? hi : lo)[d.severity] || 1;
+    });
+}
+
+function animatePulse(ring, baseR, initialDelay) {
+  function pulse() {
+    ring
+      .attr('r', baseR)
+      .attr('stroke-opacity', 0.75)
+      .transition()
+      .duration(1900)
+      .ease(d3.easePolyOut.exponent(2))
+      .attr('r', baseR + 42)
+      .attr('stroke-opacity', 0)
+      .on('end', pulse);
+  }
+  setTimeout(pulse, initialDelay);
+}
+
+function highlightInteractionEdges(interactions) {
+  const pairs = new Set(interactions.map(i => {
+    const a = graphData.nodes.find(n => n.label === i.drug_a)?.id;
+    const b = graphData.nodes.find(n => n.label === i.drug_b)?.id;
+    return [a, b].sort().join('||');
+  }));
+  // Brief flash on interaction edges, then settle into radial highlight state
+  linkGroup.selectAll('line')
+    .attr('stroke-opacity', d => {
+      const k = [d.source.id||d.source, d.target.id||d.target].sort().join('||');
+      return pairs.has(k) ? 1.0 : 0.04;
+    })
+    .attr('stroke-width', d => {
+      const k = [d.source.id||d.source, d.target.id||d.target].sort().join('||');
+      return pairs.has(k) ? ({severe:5.5,moderate:4.5,minor:3,unknown:2.5})[d.severity]||2.5 : 1;
+    });
+  setTimeout(() => applyRadialHighlight(), 2200);
+}
+
+// ── Tooltips ──────────────────────────────────────────────────────────────────
+function showNodeTooltip(event,d) {
+  const tt=document.getElementById('tooltip');
+  const cyps=d.cyp_enzymes?.length?d.cyp_enzymes.join(', '):'—';
+  tt.innerHTML=`
+    <div class="tooltip-name">${d.label}</div>
+    <div class="tooltip-id">${d.id}</div>
+    <div class="tooltip-row"><span class="tooltip-label">Indication</span><span class="tooltip-val">${d.indication||'—'}</span></div>
+    <div class="tooltip-row"><span class="tooltip-label">CYP</span><span class="tooltip-val" style="color:var(--accent2)">${cyps}</span></div>
+    <div class="tooltip-row"><span class="tooltip-label">Status</span><span class="tooltip-val" style="color:var(--minor)">${(d.groups||[]).join(', ')||'—'}</span></div>
+    <div class="tooltip-row"><span class="tooltip-label">Degree</span><span class="tooltip-val" style="color:var(--accent)">${d.degree}</span></div>`;
+  positionTooltip(tt,event);
+  tt.style.display='block';
+}
+
+function showEdgeTooltip(event,d) {
+  const colors={severe:'var(--severe)',moderate:'var(--moderate)',minor:'var(--minor)',unknown:'var(--unknown)'};
+  const tt=document.getElementById('edge-tooltip');
+  const src=d.source.label||d.source, tgt=d.target.label||d.target;
+  tt.innerHTML=`
+    <div style="font-weight:600;margin-bottom:6px;font-size:13px"><span style="color:${colors[d.severity]}">[${d.severity.toUpperCase()}]</span></div>
+    <div style="margin-bottom:5px">${src} <span style="color:var(--accent)">→</span> ${tgt}</div>
+    <div style="color:var(--text-dim);font-size:11px;line-height:1.5">${d.description||''}</div>`;
+  positionTooltip(tt,event);
+  tt.style.display='block';
+}
+
+function hideEdgeTooltip() { document.getElementById('edge-tooltip').style.display='none'; }
+
+function positionTooltip(tt,event) {
+  const area=document.getElementById('graph-area').getBoundingClientRect();
+  let x=event.clientX-area.left+12, y=event.clientY-area.top+12;
+  if(x+300>area.width) x-=320;
+  if(y+200>area.height) y-=180;
+  tt.style.left=x+'px'; tt.style.top=y+'px';
+}
+
+function highlightNode(event,d) {
+  linkGroup.selectAll('line').attr('stroke-opacity',e=>(e.source.id===d.id||e.target.id===d.id)?1.0:0.1);
+  nodeGroup.selectAll('.node circle').attr('fill-opacity',n=>{
+    if(n.id===d.id) return 1;
+    const connected=graphData.edges.some(e=>(e.source===d.id&&e.target===n.id)||(e.target===d.id&&e.source===n.id));
+    return connected?0.9:0.2;
+  });
+}
+
+function unhighlightNode() {
+  document.getElementById('tooltip').style.display = 'none';
+  applyRadialHighlight(); // restore to focus state (or default if no focus drugs)
+}
+
+function toggleFilter(btn) {
+  const sev=btn.dataset.sev;
+  if(activeFilters.has(sev)) activeFilters.delete(sev); else activeFilters.add(sev);
+  btn.classList.toggle('active');
+  linkGroup.selectAll('line').style('display',d=>activeFilters.has(d.severity)?null:'none');
+}
+
+// ── Embedded Streamlit mode: read injected HIGHLIGHT_DRUGS variable ───────────
+function applyFromInjectedDrugs() {
+  if (!HIGHLIGHT_DRUGS || HIGHLIGHT_DRUGS.length === 0) return;
+  HIGHLIGHT_DRUGS.forEach(name => {
+    const node = graphData.nodes.find(n => n.label.toLowerCase() === name.toLowerCase());
+    if (node && !patientDrugs.find(d => d.id === node.id)) patientDrugs.push(node);
+  });
+  if (patientDrugs.length > 0) {
+    renderPatientList();
+    applyRadialHighlight();
+    document.getElementById('rag-badge').style.display = 'flex';
+    if (patientDrugs.length >= 2) setTimeout(() => checkInteractions(), 800);
+  }
+}
+
+// ── URL Parameter Auto-Load (standalone mode) ─────────────────────────────────
+function loadFromURLParams() {
+  const params = new URLSearchParams(window.location.search);
+  const drugParam = params.get('drugs');
+  if (!drugParam) return;
+
+  const names = drugParam.split(',').map(s => s.trim()).filter(Boolean);
+  names.forEach(name => {
+    const node = graphData.nodes.find(n => n.label.toLowerCase() === name.toLowerCase());
+    if (node && !patientDrugs.find(d => d.id === node.id)) {
+      patientDrugs.push(node);
+    }
+  });
+
+  if (patientDrugs.length > 0) {
+    renderPatientList();
+    applyRadialHighlight();
+    // Show RAG badge
+    const badge = document.getElementById('rag-badge');
+    badge.style.display = 'flex';
+    // Auto-check if 2+ drugs loaded
+    if (patientDrugs.length >= 2) {
+      setTimeout(() => checkInteractions(), 800);
+    }
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  buildDatalist();
+  buildExampleList();
+  initGraph();
+
+  // Load drugs: injected variable (embedded mode) or URL params (standalone mode)
+  setTimeout(() => { applyFromInjectedDrugs(); loadFromURLParams(); }, 350);
+
+  document.getElementById('drug-input').addEventListener('keydown', e => { if(e.key==='Enter') addDrug(); });
+  document.getElementById('graph-area').addEventListener('click', e => {
+    if(e.target.tagName==='svg'||e.target.tagName==='g')
+      document.getElementById('tooltip').style.display='none';
+  });
+});
+</script>
+</body>
+</html>
