@@ -1,0 +1,946 @@
+[
+  {
+    "id": "eval_000",
+    "category": "severe",
+    "question": "Is it safe to combine Enalapril and Azathioprine?",
+    "drug_a": "Enalapril",
+    "drug_b": "Azathioprine",
+    "drug_a_id": "DB00584",
+    "drug_b_id": "DB00993",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "severe",
+      "description": "The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Enalapril is combined with Azathioprine. The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Enalapril is combined with Azathioprine."
+    }
+  },
+  {
+    "id": "eval_001",
+    "category": "severe",
+    "question": "Can Fosinopril and Azathioprine be taken together?",
+    "drug_a": "Fosinopril",
+    "drug_b": "Azathioprine",
+    "drug_a_id": "DB00492",
+    "drug_b_id": "DB00993",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "severe",
+      "description": "The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Fosinopril is combined with Azathioprine. The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Fosinopril is combined with Azathioprine."
+    }
+  },
+  {
+    "id": "eval_002",
+    "category": "severe",
+    "question": "I need to take both Azathioprine and Quinaprilat. Is this combination safe?",
+    "drug_a": "Azathioprine",
+    "drug_b": "Quinaprilat",
+    "drug_a_id": "DB00993",
+    "drug_b_id": "DB14217",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "severe",
+      "description": "The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Quinaprilat is combined with Azathioprine. The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Quinaprilat is combined with Azathioprine."
+    }
+  },
+  {
+    "id": "eval_003",
+    "category": "severe",
+    "question": "I am currently taking Azathioprine. My doctor also prescribed Enalaprilat. Are there any concerns?",
+    "drug_a": "Azathioprine",
+    "drug_b": "Enalaprilat",
+    "drug_a_id": "DB00993",
+    "drug_b_id": "DB09477",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "severe",
+      "description": "The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Enalaprilat is combined with Azathioprine. The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Enalaprilat is combined with Azathioprine."
+    }
+  },
+  {
+    "id": "eval_004",
+    "category": "severe",
+    "question": "Do Azathioprine and Zofenopril interact with each other?",
+    "drug_a": "Azathioprine",
+    "drug_b": "Zofenopril",
+    "drug_a_id": "DB00993",
+    "drug_b_id": "DB13166",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "severe",
+      "description": "The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Zofenopril is combined with Azathioprine. The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Zofenopril is combined with Azathioprine."
+    }
+  },
+  {
+    "id": "eval_005",
+    "category": "severe",
+    "question": "What are the drug interactions between Azathioprine and Ramiprilat?",
+    "drug_a": "Azathioprine",
+    "drug_b": "Ramiprilat",
+    "drug_a_id": "DB00993",
+    "drug_b_id": "DB14208",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "severe",
+      "description": "The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Ramiprilat is combined with Azathioprine. The risk or severity of myelosuppression, anemia, and severe leukopenia can be increased when Ramiprilat is combined with Azathioprine."
+    }
+  },
+  {
+    "id": "eval_006",
+    "category": "moderate",
+    "question": "What should I know about taking Hydroxyurea and Sulfamethoxazole at the same time?",
+    "drug_a": "Hydroxyurea",
+    "drug_b": "Sulfamethoxazole",
+    "drug_a_id": "DB01005",
+    "drug_b_id": "DB01015",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The risk or severity of myelosuppression can be increased when Sulfamethoxazole is combined with Hydroxyurea. The risk or severity of myelosuppression can be increased when Sulfamethoxazole is combined with Hydroxyurea."
+    }
+  },
+  {
+    "id": "eval_007",
+    "category": "moderate",
+    "question": "Are there any risks in using Idraparinux together with Testosterone enantate benzilic acid hydrazone?",
+    "drug_a": "Idraparinux",
+    "drug_b": "Testosterone enantate benzilic acid hydrazone",
+    "drug_a_id": "DB06406",
+    "drug_b_id": "DB13947",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "Testosterone enantate benzilic acid hydrazone may increase the anticoagulant activities of Idraparinux. Testosterone enantate benzilic acid hydrazone may increase the anticoagulant activities of Idraparinux."
+    }
+  },
+  {
+    "id": "eval_008",
+    "category": "moderate",
+    "question": "Is it safe to combine Aminosalicylic acid and Cocaine?",
+    "drug_a": "Aminosalicylic acid",
+    "drug_b": "Cocaine",
+    "drug_a_id": "DB00233",
+    "drug_b_id": "DB00907",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The risk or severity of methemoglobinemia can be increased when Aminosalicylic acid is combined with Cocaine. The risk or severity of methemoglobinemia can be increased when Aminosalicylic acid is combined with Cocaine."
+    }
+  },
+  {
+    "id": "eval_009",
+    "category": "moderate",
+    "question": "What should I know about taking Rivastigmine and Naftopidil at the same time?",
+    "drug_a": "Rivastigmine",
+    "drug_b": "Naftopidil",
+    "drug_a_id": "DB00989",
+    "drug_b_id": "DB12092",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "Rivastigmine may increase the bradycardic activities of Naftopidil. Rivastigmine may increase the bradycardic activities of Naftopidil."
+    }
+  },
+  {
+    "id": "eval_010",
+    "category": "moderate",
+    "question": "I am currently taking Sulfamethoxazole. My doctor also prescribed Melengestrol. Are there any concerns?",
+    "drug_a": "Sulfamethoxazole",
+    "drug_b": "Melengestrol",
+    "drug_a_id": "DB01015",
+    "drug_b_id": "DB11529",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The risk or severity of myelosuppression can be increased when Sulfamethoxazole is combined with Melengestrol. The risk or severity of myelosuppression can be increased when Sulfamethoxazole is combined with Melengestrol."
+    }
+  },
+  {
+    "id": "eval_011",
+    "category": "moderate",
+    "question": "Can Salmeterol and Rufloxacin be taken together?",
+    "drug_a": "Salmeterol",
+    "drug_b": "Rufloxacin",
+    "drug_a_id": "DB00938",
+    "drug_b_id": "DB13772",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The risk or severity of QTc prolongation can be increased when Salmeterol is combined with Rufloxacin. The risk or severity of QTc prolongation can be increased when Salmeterol is combined with Rufloxacin."
+    }
+  },
+  {
+    "id": "eval_012",
+    "category": "moderate",
+    "question": "What are the drug interactions between Imipramine and Etanautine?",
+    "drug_a": "Imipramine",
+    "drug_b": "Etanautine",
+    "drug_a_id": "DB00458",
+    "drug_b_id": "DB13636",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The risk or severity of adverse effects can be increased when Etanautine is combined with Imipramine. The risk or severity of adverse effects can be increased when Etanautine is combined with Imipramine."
+    }
+  },
+  {
+    "id": "eval_013",
+    "category": "moderate",
+    "question": "Do Visilizumab and Plozalizumab interact with each other?",
+    "drug_a": "Visilizumab",
+    "drug_b": "Plozalizumab",
+    "drug_a_id": "DB12053",
+    "drug_b_id": "DB12520",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The risk or severity of adverse effects can be increased when Visilizumab is combined with Plozalizumab. The risk or severity of adverse effects can be increased when Visilizumab is combined with Plozalizumab."
+    }
+  },
+  {
+    "id": "eval_014",
+    "category": "moderate",
+    "question": "Are there any risks in using Fluocinonide together with Filgotinib?",
+    "drug_a": "Fluocinonide",
+    "drug_b": "Filgotinib",
+    "drug_a_id": "DB01047",
+    "drug_b_id": "DB14845",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The risk or severity of adverse effects can be increased when Fluocinonide is combined with Filgotinib. The risk or severity of adverse effects can be increased when Fluocinonide is combined with Filgotinib."
+    }
+  },
+  {
+    "id": "eval_015",
+    "category": "moderate",
+    "question": "I need to take both Mephentermine and Ractopamine. Is this combination safe?",
+    "drug_a": "Mephentermine",
+    "drug_b": "Ractopamine",
+    "drug_a_id": "DB01365",
+    "drug_b_id": "DB11541",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The risk or severity of hypertension can be increased when Mephentermine is combined with Ractopamine. The risk or severity of hypertension can be increased when Mephentermine is combined with Ractopamine."
+    }
+  },
+  {
+    "id": "eval_016",
+    "category": "moderate",
+    "question": "Can Fluocortolone and Atracurium be taken together?",
+    "drug_a": "Fluocortolone",
+    "drug_b": "Atracurium",
+    "drug_a_id": "DB08971",
+    "drug_b_id": "DB13295",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The risk or severity of myopathy and weakness can be increased when Atracurium is combined with Fluocortolone. The risk or severity of myopathy and weakness can be increased when Atracurium is combined with Fluocortolone."
+    }
+  },
+  {
+    "id": "eval_017",
+    "category": "moderate",
+    "question": "What should I know about taking Halofantrine and Dexamethasone acetate at the same time?",
+    "drug_a": "Halofantrine",
+    "drug_b": "Dexamethasone acetate",
+    "drug_a_id": "DB01218",
+    "drug_b_id": "DB14649",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The metabolism of Halofantrine can be increased when combined with Dexamethasone acetate. The metabolism of Halofantrine can be increased when combined with Dexamethasone acetate."
+    }
+  },
+  {
+    "id": "eval_018",
+    "category": "moderate",
+    "question": "What are the drug interactions between Torasemide and Unoprostone?",
+    "drug_a": "Torasemide",
+    "drug_b": "Unoprostone",
+    "drug_a_id": "DB00214",
+    "drug_b_id": "DB06826",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "Torasemide may increase the hypotensive activities of Unoprostone. Torasemide may increase the hypotensive activities of Unoprostone."
+    }
+  },
+  {
+    "id": "eval_019",
+    "category": "moderate",
+    "question": "I need to take both Cyclophosphamide and Metabutethamine. Is this combination safe?",
+    "drug_a": "Cyclophosphamide",
+    "drug_b": "Metabutethamine",
+    "drug_a_id": "DB00531",
+    "drug_b_id": "DB13578",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The risk or severity of methemoglobinemia can be increased when Cyclophosphamide is combined with Metabutethamine. The risk or severity of methemoglobinemia can be increased when Cyclophosphamide is combined with Metabutethamine."
+    }
+  },
+  {
+    "id": "eval_020",
+    "category": "moderate",
+    "question": "Are there any risks in using Phentolamine together with Remifentanil?",
+    "drug_a": "Phentolamine",
+    "drug_b": "Remifentanil",
+    "drug_a_id": "DB00692",
+    "drug_b_id": "DB00899",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "Remifentanil may decrease the antihypertensive activities of Phentolamine. Remifentanil may decrease the antihypertensive activities of Phentolamine."
+    }
+  },
+  {
+    "id": "eval_021",
+    "category": "moderate",
+    "question": "Is it safe to combine Polyestradiol phosphate and Pamrevlumab?",
+    "drug_a": "Polyestradiol phosphate",
+    "drug_b": "Pamrevlumab",
+    "drug_a_id": "DB09369",
+    "drug_b_id": "DB14952",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "Polyestradiol phosphate may increase the thrombogenic activities of Pamrevlumab. Polyestradiol phosphate may increase the thrombogenic activities of Pamrevlumab."
+    }
+  },
+  {
+    "id": "eval_022",
+    "category": "moderate",
+    "question": "I am currently taking Bamlanivimab. My doctor also prescribed Sotrovimab. Are there any concerns?",
+    "drug_a": "Bamlanivimab",
+    "drug_b": "Sotrovimab",
+    "drug_a_id": "DB15718",
+    "drug_b_id": "DB16355",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "The risk or severity of adverse effects can be increased when Bamlanivimab is combined with Sotrovimab. The risk or severity of adverse effects can be increased when Bamlanivimab is combined with Sotrovimab."
+    }
+  },
+  {
+    "id": "eval_023",
+    "category": "moderate",
+    "question": "Do Drospirenone and Phenazopyridine interact with each other?",
+    "drug_a": "Drospirenone",
+    "drug_b": "Phenazopyridine",
+    "drug_a_id": "DB01395",
+    "drug_b_id": "DB01438",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "Drospirenone may increase the excretion rate of Phenazopyridine which could result in a lower serum level and potentially a reduction in efficacy. Drospirenone may increase the excretion rate of Phenazopyridine which could result in a lower serum level and potentially a reduction in efficacy."
+    }
+  },
+  {
+    "id": "eval_024",
+    "category": "moderate",
+    "question": "Can Vancomycin and Testosterone enanthate be taken together?",
+    "drug_a": "Vancomycin",
+    "drug_b": "Testosterone enanthate",
+    "drug_a_id": "DB00512",
+    "drug_b_id": "DB13944",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "Testosterone enanthate may decrease the excretion rate of Vancomycin which could result in a higher serum level. Testosterone enanthate may decrease the excretion rate of Vancomycin which could result in a higher serum level."
+    }
+  },
+  {
+    "id": "eval_025",
+    "category": "moderate",
+    "question": "I need to take both Nabilone and Lortalamine. Is this combination safe?",
+    "drug_a": "Nabilone",
+    "drug_b": "Lortalamine",
+    "drug_a_id": "DB00486",
+    "drug_b_id": "DB09187",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "moderate",
+      "description": "Nabilone may increase the central nervous system depressant (CNS depressant) activities of Lortalamine. Nabilone may increase the central nervous system depressant (CNS depressant) activities of Lortalamine."
+    }
+  },
+  {
+    "id": "eval_026",
+    "category": "minor",
+    "question": "What are the drug interactions between Tenofovir disoproxil and Smallpox (Vaccinia) Vaccine, Live?",
+    "drug_a": "Tenofovir disoproxil",
+    "drug_b": "Smallpox (Vaccinia) Vaccine, Live",
+    "drug_a_id": "DB00300",
+    "drug_b_id": "DB14711",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "minor",
+      "description": "The therapeutic efficacy of Smallpox (Vaccinia) Vaccine, Live can be decreased when used in combination with Tenofovir disoproxil. The therapeutic efficacy of Smallpox (Vaccinia) Vaccine, Live can be decreased when used in combination with Tenofovir disoproxil."
+    }
+  },
+  {
+    "id": "eval_027",
+    "category": "minor",
+    "question": "What should I know about taking Foscarnet and Smallpox (Vaccinia) Vaccine, Live at the same time?",
+    "drug_a": "Foscarnet",
+    "drug_b": "Smallpox (Vaccinia) Vaccine, Live",
+    "drug_a_id": "DB00529",
+    "drug_b_id": "DB14711",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "minor",
+      "description": "The therapeutic efficacy of Smallpox (Vaccinia) Vaccine, Live can be decreased when used in combination with Foscarnet. The therapeutic efficacy of Smallpox (Vaccinia) Vaccine, Live can be decreased when used in combination with Foscarnet."
+    }
+  },
+  {
+    "id": "eval_028",
+    "category": "minor",
+    "question": "I am currently taking Phalaris minor pollen. My doctor also prescribed Cloranolol. Are there any concerns?",
+    "drug_a": "Phalaris minor pollen",
+    "drug_b": "Cloranolol",
+    "drug_a_id": "DB10963",
+    "drug_b_id": "DB13508",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "minor",
+      "description": "The risk of a hypersensitivity reaction to Phalaris minor pollen is increased when it is combined with Cloranolol. The risk of a hypersensitivity reaction to Phalaris minor pollen is increased when it is combined with Cloranolol."
+    }
+  },
+  {
+    "id": "eval_029",
+    "category": "minor",
+    "question": "Do Indenolol and Phalaris minor pollen interact with each other?",
+    "drug_a": "Indenolol",
+    "drug_b": "Phalaris minor pollen",
+    "drug_a_id": "DB08952",
+    "drug_b_id": "DB10963",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "minor",
+      "description": "The risk of a hypersensitivity reaction to Phalaris minor pollen is increased when it is combined with Indenolol. The risk of a hypersensitivity reaction to Phalaris minor pollen is increased when it is combined with Indenolol."
+    }
+  },
+  {
+    "id": "eval_030",
+    "category": "minor",
+    "question": "Is it safe to combine Penciclovir and Smallpox (Vaccinia) Vaccine, Live?",
+    "drug_a": "Penciclovir",
+    "drug_b": "Smallpox (Vaccinia) Vaccine, Live",
+    "drug_a_id": "DB00299",
+    "drug_b_id": "DB14711",
+    "ground_truth": {
+      "has_record": true,
+      "severity": "minor",
+      "description": "The therapeutic efficacy of Smallpox (Vaccinia) Vaccine, Live can be decreased when used in combination with Penciclovir. The therapeutic efficacy of Smallpox (Vaccinia) Vaccine, Live can be decreased when used in combination with Penciclovir."
+    }
+  },
+  {
+    "id": "eval_031",
+    "category": "no_record",
+    "question": "Are there any risks in using Daprodustat together with Etifoxine?",
+    "drug_a": "Daprodustat",
+    "drug_b": "Etifoxine",
+    "drug_a_id": "DB11682",
+    "drug_b_id": "DB08986",
+    "ground_truth": {
+      "has_record": false,
+      "severity": null,
+      "description": null,
+      "note": "No interaction record found in DrugBank. System should acknowledge absence of data rather than fabricate."
+    }
+  },
+  {
+    "id": "eval_032",
+    "category": "no_record",
+    "question": "What should I know about taking Daprodustat and Galsulfase at the same time?",
+    "drug_a": "Daprodustat",
+    "drug_b": "Galsulfase",
+    "drug_a_id": "DB11682",
+    "drug_b_id": "DB01279",
+    "ground_truth": {
+      "has_record": false,
+      "severity": null,
+      "description": null,
+      "note": "No interaction record found in DrugBank. System should acknowledge absence of data rather than fabricate."
+    }
+  },
+  {
+    "id": "eval_033",
+    "category": "no_record",
+    "question": "Can Daprodustat and Rosin be taken together?",
+    "drug_a": "Daprodustat",
+    "drug_b": "Rosin",
+    "drug_a_id": "DB11682",
+    "drug_b_id": "DB11165",
+    "ground_truth": {
+      "has_record": false,
+      "severity": null,
+      "description": null,
+      "note": "No interaction record found in DrugBank. System should acknowledge absence of data rather than fabricate."
+    }
+  },
+  {
+    "id": "eval_034",
+    "category": "no_record",
+    "question": "Is it safe to combine Daprodustat and Ipecac?",
+    "drug_a": "Daprodustat",
+    "drug_b": "Ipecac",
+    "drug_a_id": "DB11682",
+    "drug_b_id": "DB13293",
+    "ground_truth": {
+      "has_record": false,
+      "severity": null,
+      "description": null,
+      "note": "No interaction record found in DrugBank. System should acknowledge absence of data rather than fabricate."
+    }
+  },
+  {
+    "id": "eval_035",
+    "category": "no_record",
+    "question": "Are there any risks in using Daprodustat together with Apramycin?",
+    "drug_a": "Daprodustat",
+    "drug_b": "Apramycin",
+    "drug_a_id": "DB11682",
+    "drug_b_id": "DB04626",
+    "ground_truth": {
+      "has_record": false,
+      "severity": null,
+      "description": null,
+      "note": "No interaction record found in DrugBank. System should acknowledge absence of data rather than fabricate."
+    }
+  },
+  {
+    "id": "eval_036",
+    "category": "no_record",
+    "question": "What are the drug interactions between Daprodustat and Cyproterone acetate?",
+    "drug_a": "Daprodustat",
+    "drug_b": "Cyproterone acetate",
+    "drug_a_id": "DB11682",
+    "drug_b_id": "DB04839",
+    "ground_truth": {
+      "has_record": false,
+      "severity": null,
+      "description": null,
+      "note": "No interaction record found in DrugBank. System should acknowledge absence of data rather than fabricate."
+    }
+  },
+  {
+    "id": "eval_037",
+    "category": "no_record",
+    "question": "I am currently taking Daprodustat. My doctor also prescribed Ethanolamine oleate. Are there any concerns?",
+    "drug_a": "Daprodustat",
+    "drug_b": "Ethanolamine oleate",
+    "drug_a_id": "DB11682",
+    "drug_b_id": "DB06689",
+    "ground_truth": {
+      "has_record": false,
+      "severity": null,
+      "description": null,
+      "note": "No interaction record found in DrugBank. System should acknowledge absence of data rather than fabricate."
+    }
+  },
+  {
+    "id": "eval_038",
+    "category": "no_record",
+    "question": "I need to take both Daprodustat and Aspergillus terreus. Is this combination safe?",
+    "drug_a": "Daprodustat",
+    "drug_b": "Aspergillus terreus",
+    "drug_a_id": "DB11682",
+    "drug_b_id": "DB10450",
+    "ground_truth": {
+      "has_record": false,
+      "severity": null,
+      "description": null,
+      "note": "No interaction record found in DrugBank. System should acknowledge absence of data rather than fabricate."
+    }
+  },
+  {
+    "id": "eval_039",
+    "category": "no_record",
+    "question": "Do Daprodustat and Volanesorsen interact with each other?",
+    "drug_a": "Daprodustat",
+    "drug_b": "Volanesorsen",
+    "drug_a_id": "DB11682",
+    "drug_b_id": "DB15067",
+    "ground_truth": {
+      "has_record": false,
+      "severity": null,
+      "description": null,
+      "note": "No interaction record found in DrugBank. System should acknowledge absence of data rather than fabricate."
+    }
+  },
+  {
+    "id": "eval_040",
+    "category": "no_record",
+    "question": "Can Daprodustat and Menthyl salicylate be taken together?",
+    "drug_a": "Daprodustat",
+    "drug_b": "Menthyl salicylate",
+    "drug_a_id": "DB11682",
+    "drug_b_id": "DB11201",
+    "ground_truth": {
+      "has_record": false,
+      "severity": null,
+      "description": null,
+      "note": "No interaction record found in DrugBank. System should acknowledge absence of data rather than fabricate."
+    }
+  },
+  {
+    "id": "eval_041",
+    "category": "multi_drug",
+    "question": "I am taking Incadronic acid, Amdinocillin, and Dexrabeprazole. Are there any drug interactions I should know about?",
+    "drugs": [
+      "Incadronic acid",
+      "Amdinocillin",
+      "Dexrabeprazole"
+    ],
+    "drug_ids": [
+      "DB06255",
+      "DB01163",
+      "DB13762"
+    ],
+    "ground_truth": {
+      "pairs": [
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Amdinocillin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Dexrabeprazole",
+          "has_record": true,
+          "severity": "unknown",
+          "description": "The therapeutic efficacy of Incadronic acid can be decreased when used in combination with Dexrabeprazole. The therapeutic efficacy of Incadronic acid can be decreased when used in combination with Dexrabeprazole."
+        },
+        {
+          "drug_a": "Amdinocillin",
+          "drug_b": "Dexrabeprazole",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "eval_042",
+    "category": "multi_drug",
+    "question": "What are the potential interactions between Incadronic acid, Amdinocillin, and Dexrabeprazole?",
+    "drugs": [
+      "Incadronic acid",
+      "Amdinocillin",
+      "Dexrabeprazole"
+    ],
+    "drug_ids": [
+      "DB06255",
+      "DB01163",
+      "DB13762"
+    ],
+    "ground_truth": {
+      "pairs": [
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Amdinocillin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Dexrabeprazole",
+          "has_record": true,
+          "severity": "unknown",
+          "description": "The therapeutic efficacy of Incadronic acid can be decreased when used in combination with Dexrabeprazole. The therapeutic efficacy of Incadronic acid can be decreased when used in combination with Dexrabeprazole."
+        },
+        {
+          "drug_a": "Amdinocillin",
+          "drug_b": "Dexrabeprazole",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "eval_043",
+    "category": "multi_drug",
+    "question": "Is it safe to take Incadronic acid, Amdinocillin, and Dexrabeprazole together?",
+    "drugs": [
+      "Incadronic acid",
+      "Amdinocillin",
+      "Dexrabeprazole"
+    ],
+    "drug_ids": [
+      "DB06255",
+      "DB01163",
+      "DB13762"
+    ],
+    "ground_truth": {
+      "pairs": [
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Amdinocillin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Dexrabeprazole",
+          "has_record": true,
+          "severity": "unknown",
+          "description": "The therapeutic efficacy of Incadronic acid can be decreased when used in combination with Dexrabeprazole. The therapeutic efficacy of Incadronic acid can be decreased when used in combination with Dexrabeprazole."
+        },
+        {
+          "drug_a": "Amdinocillin",
+          "drug_b": "Dexrabeprazole",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        }
+      ]
+    }
+  },
+  {
+    "id": "eval_044",
+    "category": "multi_drug",
+    "question": "I am taking Incadronic acid, Amdinocillin, and Levofloxacin. Are there any drug interactions I should know about?",
+    "drugs": [
+      "Incadronic acid",
+      "Amdinocillin",
+      "Levofloxacin"
+    ],
+    "drug_ids": [
+      "DB06255",
+      "DB01163",
+      "DB01137"
+    ],
+    "ground_truth": {
+      "pairs": [
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Amdinocillin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Levofloxacin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Amdinocillin",
+          "drug_b": "Levofloxacin",
+          "has_record": true,
+          "severity": "moderate",
+          "description": "The serum concentration of Levofloxacin can be increased when it is combined with Amdinocillin. The serum concentration of Levofloxacin can be increased when it is combined with Amdinocillin."
+        }
+      ]
+    }
+  },
+  {
+    "id": "eval_045",
+    "category": "multi_drug",
+    "question": "What are the potential interactions between Incadronic acid, Amdinocillin, and Levofloxacin?",
+    "drugs": [
+      "Incadronic acid",
+      "Amdinocillin",
+      "Levofloxacin"
+    ],
+    "drug_ids": [
+      "DB06255",
+      "DB01163",
+      "DB01137"
+    ],
+    "ground_truth": {
+      "pairs": [
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Amdinocillin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Levofloxacin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Amdinocillin",
+          "drug_b": "Levofloxacin",
+          "has_record": true,
+          "severity": "moderate",
+          "description": "The serum concentration of Levofloxacin can be increased when it is combined with Amdinocillin. The serum concentration of Levofloxacin can be increased when it is combined with Amdinocillin."
+        }
+      ]
+    }
+  },
+  {
+    "id": "eval_046",
+    "category": "multi_drug",
+    "question": "Is it safe to take Incadronic acid, Amdinocillin, and Levofloxacin together?",
+    "drugs": [
+      "Incadronic acid",
+      "Amdinocillin",
+      "Levofloxacin"
+    ],
+    "drug_ids": [
+      "DB06255",
+      "DB01163",
+      "DB01137"
+    ],
+    "ground_truth": {
+      "pairs": [
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Amdinocillin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Levofloxacin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Amdinocillin",
+          "drug_b": "Levofloxacin",
+          "has_record": true,
+          "severity": "moderate",
+          "description": "The serum concentration of Levofloxacin can be increased when it is combined with Amdinocillin. The serum concentration of Levofloxacin can be increased when it is combined with Amdinocillin."
+        }
+      ]
+    }
+  },
+  {
+    "id": "eval_047",
+    "category": "multi_drug",
+    "question": "I am taking Incadronic acid, Amdinocillin, and Omadacycline. Are there any drug interactions I should know about?",
+    "drugs": [
+      "Incadronic acid",
+      "Amdinocillin",
+      "Omadacycline"
+    ],
+    "drug_ids": [
+      "DB06255",
+      "DB01163",
+      "DB12455"
+    ],
+    "ground_truth": {
+      "pairs": [
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Amdinocillin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Omadacycline",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Amdinocillin",
+          "drug_b": "Omadacycline",
+          "has_record": true,
+          "severity": "unknown",
+          "description": "The therapeutic efficacy of Amdinocillin can be decreased when used in combination with Omadacycline. The therapeutic efficacy of Amdinocillin can be decreased when used in combination with Omadacycline."
+        }
+      ]
+    }
+  },
+  {
+    "id": "eval_048",
+    "category": "multi_drug",
+    "question": "What are the potential interactions between Incadronic acid, Amdinocillin, and Omadacycline?",
+    "drugs": [
+      "Incadronic acid",
+      "Amdinocillin",
+      "Omadacycline"
+    ],
+    "drug_ids": [
+      "DB06255",
+      "DB01163",
+      "DB12455"
+    ],
+    "ground_truth": {
+      "pairs": [
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Amdinocillin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Omadacycline",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Amdinocillin",
+          "drug_b": "Omadacycline",
+          "has_record": true,
+          "severity": "unknown",
+          "description": "The therapeutic efficacy of Amdinocillin can be decreased when used in combination with Omadacycline. The therapeutic efficacy of Amdinocillin can be decreased when used in combination with Omadacycline."
+        }
+      ]
+    }
+  },
+  {
+    "id": "eval_049",
+    "category": "multi_drug",
+    "question": "Is it safe to take Incadronic acid, Amdinocillin, and Omadacycline together?",
+    "drugs": [
+      "Incadronic acid",
+      "Amdinocillin",
+      "Omadacycline"
+    ],
+    "drug_ids": [
+      "DB06255",
+      "DB01163",
+      "DB12455"
+    ],
+    "ground_truth": {
+      "pairs": [
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Amdinocillin",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Incadronic acid",
+          "drug_b": "Omadacycline",
+          "has_record": false,
+          "severity": null,
+          "description": null
+        },
+        {
+          "drug_a": "Amdinocillin",
+          "drug_b": "Omadacycline",
+          "has_record": true,
+          "severity": "unknown",
+          "description": "The therapeutic efficacy of Amdinocillin can be decreased when used in combination with Omadacycline. The therapeutic efficacy of Amdinocillin can be decreased when used in combination with Omadacycline."
+        }
+      ]
+    }
+  }
+]
